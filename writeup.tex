@@ -1,0 +1,924 @@
+% From Ideas to Action: a detailed write-up of the model in ideas_to_action.pdf
+% Compile with XeLaTeX:  latexmk -xelatex writeup.tex
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amsthm}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{STIX Two Text}[BoldFont={STIXGeneral-Bold},BoldItalicFont={STIXGeneral-BoldItalic}]
+\setmathfont{STIX Two Math}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{booktabs,xcolor,microtype}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{nap}{HTML}{9A6A1F}
+\definecolor{ber}{HTML}{2F5D8A}
+\definecolor{lan}{HTML}{3D7357}
+\definecolor{muted}{HTML}{5A5A5A}
+\newcommand{\Nap}{\textcolor{nap}{Napoleon}}
+\newcommand{\Ber}{\textcolor{ber}{Berthier}}
+\newcommand{\Lan}{\textcolor{lan}{Lannes}}
+
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem*{definition*}{Definition}
+\newtheorem*{lemma*}{Lemma}
+\newtheorem*{theorem*}{Theorem}
+\newtheorem*{proposition*}{Proposition}
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+\newenvironment{intuition}{\begin{quote}\small\color{muted}\textit{Intuition.}\ }{\end{quote}}
+
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Var}{Var}
+\newcommand{\Ycal}{\mathcal{Y}}
+\newcommand{\Rcal}{\mathcal{R}}
+\newcommand{\Acal}{\mathcal{A}}
+\newcommand{\Scal}{\mathcal{S}}
+\newcommand{\accept}{\text{accept}}
+
+\linespread{1.08}
+\setlength{\parskip}{0.35em}
+
+\title{From Ideas to Action:\\[0.2em] \large Strategy, Solving, and Execution in a Model of AI and Growth}
+\author{}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Producing anything takes three kinds of work: deciding what to do, working out how to do it, and doing it. We model these as three agents, named after Napoleon, his chief of staff Berthier, and his marshal Lannes. \Nap{} screens an endless supply of ideas using noisy signals and must decide which few to pursue; \Ber{} turns a chosen plan into a detailed solution by approximating the true problem with a finite family of functions; \Lan{} carries the solution out, but only with the actions that are physically feasible. We define AI as an improvement to \Ber, \emph{vision} as an improvement to \Nap, RSI as both, and \emph{physical progress} as an improvement to \Lan. We prove four results. AI alone raises output to a fixed ceiling and then stops. Sharper judgment has a ceiling too. When the values of ideas have thin tails, neither AI, nor vision, nor both together can sustain growth; with heavy tails, faster screening can. Finally, once the physical frontier is taken into account, output is bounded whatever thinking does: lasting growth requires physical progress. Research is different. In a research sector, where \Ber's solution is itself the output and there is no \Lan, AI relaxes \Nap's capacity constraint without limit, raising research output much more than production output; and AI together with vision sustains growth even when ideas' values have thin tails.
+\end{abstract}
+
+\tableofcontents
+\bigskip
+
+%=====================================================================
+\section{Introduction}
+%=====================================================================
+
+Suppose you want to know where the economic value of artificial intelligence will come from. One view is that AI will be extraordinarily good at \emph{solving} problems: give it a well-posed task and it will find a near-optimal answer quickly. Another view is that AI will eventually be good at \emph{deciding which problems are worth solving}. A third consideration is that, however good the thinking, something eventually has to be \emph{done} in the physical world, and that may be the binding constraint.
+
+This note builds a small model that keeps these three kinds of work separate, and asks which of them can sustain growth. The model has three agents:
+\begin{itemize}
+  \item a \textbf{strategist}, \Nap, who decides \emph{what} to do;
+  \item a \textbf{solver}, \Ber, who works out \emph{how};
+  \item an \textbf{executor}, \Lan, who \emph{does} it.
+\end{itemize}
+The names come from the Napoleonic army: Napoleon decided what each campaign should achieve; Louis-Alexandre Berthier, his chief of staff, turned those intentions into detailed orders, routes, and timetables; Jean Lannes, one of his marshals, carried the orders out on the battlefield.
+
+\begin{intuition}
+The point of separating the three is that they fail in different ways. A strategist fails by pursuing the wrong idea. A solver fails by getting the details wrong for a good idea. An executor fails because the world does not allow exactly what the plan calls for. Improving one kind of work leaves the others' failures in place, and that is the source of every result below.
+\end{intuition}
+
+\paragraph{Results in brief.}
+\begin{enumerate}
+  \item \textbf{AI alone cannot sustain growth} (Proposition~\ref{prop:ai}). A better solver can at most remove its own errors and fill the downstream capacity. That raises output once, to a ceiling that depends only on the strategist and the executor.
+  \item \textbf{Sharper judgment has a ceiling} (Proposition~\ref{prop:judgment}). Better signals can at most give the strategist perfect information about the ideas he examines; with thin-tailed idea values, that is still a finite ceiling.
+  \item \textbf{With thin tails, nothing cognitive sustains growth} (Proposition~\ref{prop:thin}). If ideas' values are thin-tailed, even exponentially faster screening raises output only like $\sqrt t$.
+  \item \textbf{Heavy tails change this} (the heavy-tail proposition, Section~\ref{sec:heavy}), but \textbf{the physical frontier bounds output anyway} (Proposition~\ref{prop:frontier}). When better plans require actions further out, and only finitely many actions are feasible, output is bounded, whatever the strategist and the solver do. Long-run growth then requires moving the physical frontier.
+  \item \textbf{Research is different} (Propositions~\ref{prop:resceiling} and~\ref{prop:resgrowth}). In research there is no executor. AI then relaxes the strategist's capacity constraint without limit, so research output rises far more than production output, up to a ceiling set only by how fast the strategist can screen. With RSI, both constraints keep relaxing and research grows at the slower of the two rates, even with thin tails.
+\end{enumerate}
+
+%=====================================================================
+\section{The environment}
+%=====================================================================
+
+\subsection{Plans, actions, and payoffs}
+
+A \textbf{plan} $\xi\in\Xi$ says what to do: an objective and a broad course of action, without operational detail. A plan is carried out by a detailed \textbf{action} $a\in\Acal(\xi)\subseteq\mathbb{R}^d$; the action specifies the details (orders, routes, timing, allocation). Taking action $a$ in pursuit of plan $\xi$ yields \textbf{payoff} $W(a;\xi)$.
+
+\begin{assumption}[Smooth problems]\label{ass:smooth}
+For every plan, $\Acal(\xi)$ is compact and $W(\cdot\,;\xi)$ is infinitely differentiable ($C^\infty$) in $a$.
+\end{assumption}
+
+The \textbf{ideal solution} and the \textbf{value} of a plan are
+\begin{equation}\label{eq:ideal}
+a^*(\xi)\in\arg\max_{a\in\Acal(\xi)}W(a;\xi),\qquad v(\xi)=W\big(a^*(\xi);\xi\big).
+\end{equation}
+Compactness and continuity guarantee that the maximum exists. The value $v(\xi)$ is what the plan would deliver if every detail were worked out perfectly and every detail could be carried out exactly.
+
+\begin{intuition}
+The plan is the ``what''; the action is the ``how''. Two plans can share the same space of actions but rank them very differently. The value $v(\xi)$ is a best case that no one actually achieves: it is the yardstick against which the solver's and executor's shortfalls are measured.
+\end{intuition}
+
+\subsection{How a plan becomes output}
+
+Every plan that is pursued passes through three stages:
+\[
+\underset{\text{\Nap's plan}}{\xi}\ \xrightarrow{\ \text{\Ber}\ }\ \underset{\text{solution}}{\hat a}\ \xrightarrow{\ \text{\Lan}\ }\ \underset{\text{action}}{\tilde a}\ \longrightarrow\ \underset{\text{output}}{Y=W(\tilde a;\xi)}.
+\]
+\Nap{} chooses $\xi$; \Ber{} produces a detailed solution $\hat a$; \Lan{} carries out an action $\tilde a$, which need not equal $\hat a$. Output from the project is the payoff of what actually gets done, $Y=W(\tilde a;\xi)$.
+
+Each agent comes in many copies working in parallel: $n_A$ Napoleons, $n_B$ Berthiers, and $n_L$ Lanneses. Each stage takes time. We describe the downstream stages first, because \Nap's choice depends on what happens to a plan after he chooses it, much as one solves a dynamic program backwards.
+
+%=====================================================================
+\section{\texorpdfstring{The executor: \Lan}{The executor: Lannes}}
+%=====================================================================
+
+\setcounter{definition}{2}\begin{definition}[Executor, or \Lan]\label{def:lannes}
+An executor, or a \Lan, is a pair $L=(\tau_L,\Rcal)$:
+\begin{itemize}
+  \item the \textbf{budget set} $\Rcal\subseteq\Acal(\xi)$ is the set of actions that can physically be carried out;
+  \item the \textbf{execution time} $\tau_L$ is how long it takes to carry out one plan. With $n_L$ executors working in parallel, plans are carried out at rate $\mu_L=n_L/\tau_L$.
+\end{itemize}
+\end{definition}
+
+\paragraph{Problem L (execution).} \Lan{} receives \Ber's solution $\hat a$ and carries out the feasible action closest to it:
+\begin{equation}\label{eq:lannes}
+\tilde a=\arg\min_{r\in\Rcal}\ \lVert r-\hat a\rVert.
+\end{equation}
+
+\paragraph{Execution loss.} What \Lan{} loses, relative to doing exactly what \Ber{} asked, is
+\begin{equation}\label{eq:kappaL}
+\kappa_L(\xi)=W(\hat a;\xi)-W(\tilde a;\xi).
+\end{equation}
+If $\hat a\in\Rcal$, then $\tilde a=\hat a$ and $\kappa_L=0$.
+
+\paragraph{Best feasible value.} Because the executed action always lies in $\Rcal$, no plan can ever deliver more than
+\begin{equation}\label{eq:Ubar}
+\bar U(\xi)=\max_{r\in\Rcal}W(r;\xi)\ \le\ v(\xi).
+\end{equation}
+The inequality holds because $\Rcal\subseteq\Acal(\xi)$ and $v(\xi)$ is the maximum over $\Acal(\xi)$. The quantity $\bar U(\xi)$ depends only on the plan and on the budget set; it does not depend on \Ber.
+
+\begin{intuition}
+The executor's difficulty is not that he is clumsy. It is that the world offers a limited menu. A detailed solution can call for something that no available technology can do; the executor then does the closest thing he can. Notice that $\kappa_L$ can be negative: if \Ber's solution is off in a direction that the budget set happens to correct, the closest feasible action may be \emph{better} than what \Ber{} proposed. That is why $\kappa_L$ is not written as an absolute value: it is the signed shortfall, and the losses below have to add up.
+\end{intuition}
+
+%=====================================================================
+\section{\texorpdfstring{The solver: \Ber}{The solver: Berthier}}
+%=====================================================================
+
+\Ber{} must turn a vague plan into a concrete action. The true problem $\max_aW(a;\xi)$ is usually too complicated to solve exactly, so \Ber{} replaces it with a tractable approximation and solves that.
+
+\setcounter{definition}{1}\begin{definition}[Solver, or \Ber]\label{def:berthier}
+A solver, or a \Ber, is a pair $B=(\tau_B,k)$. \Ber{} replaces the true payoff by its best approximation from a \textbf{sieve} $\mathcal{W}_k$, a family of functions of complexity $k$:
+\begin{equation}\label{eq:sieve}
+\hat W(\cdot\,;\xi)\in\arg\min_{f\in\mathcal{W}_k}\ \sup_{a\in\Acal(\xi)}\big|f(a)-W(a;\xi)\big|.
+\end{equation}
+\begin{itemize}
+  \item The \textbf{sieve size} $k$ measures how rich a model \Ber{} can handle (for example, the degree of a polynomial, the number of spline knots, or the size of a neural network).
+  \item The \textbf{solving time} $\tau_B$ is how long it takes to solve one plan. With $n_B$ solvers, plans are solved at rate $\mu_B=n_B/\tau_B$.
+\end{itemize}
+\end{definition}
+
+Examples of sieves are polynomials of degree at most $p$ (so $k\asymp p^d$ coefficients), splines with $k$ basis functions, or neural networks with $k$ parameters. The approximation in~\eqref{eq:sieve} is \emph{global}: it is chosen to be close to $W$ over the whole action set, so it does not require knowing in advance where the optimum lies.
+
+\paragraph{Problem B (approximate, then solve).} \Ber{} solves the approximate problem exactly:
+\begin{equation}\label{eq:berthier}
+\hat{\mathcal{P}}(\xi):\qquad \hat a\in\arg\max_{a\in\Acal(\xi)}\hat W(a;\xi).
+\end{equation}
+
+\paragraph{Solution loss.} The cost of working with the approximation rather than the truth is
+\begin{equation}\label{eq:kappaB}
+\kappa_B(\xi)=\big|v(\xi)-W(\hat a;\xi)\big|=v(\xi)-W(\hat a;\xi).
+\end{equation}
+The absolute value is automatic: $\hat a\in\Acal(\xi)$ and $v(\xi)$ is the maximum of $W$ over $\Acal(\xi)$, so $W(\hat a;\xi)\le v(\xi)$.
+
+\subsection{How good is the approximation?}
+
+Define the \textbf{approximation error}, the distance from $W$ to the sieve:
+\begin{equation}\label{eq:epsB}
+\varepsilon_B(k)=\min_{f\in\mathcal{W}_k}\ \sup_{a\in\Acal(\xi)}\big|f(a)-W(a;\xi)\big|.
+\end{equation}
+Approximation theory gives rates for standard sieves. For polynomial or spline sieves on a compact set in $\mathbb{R}^d$ and a payoff in $C^s$, Jackson-type theorems give
+\begin{equation}\label{eq:jackson}
+\varepsilon_B(k)\ \le\ C_s\,k^{-s/d},
+\end{equation}
+where $C_s$ depends on bounds on the first $s$ derivatives of $W$ and on the domain. Because $W$ is $C^\infty$ (Assumption~\ref{ass:smooth}), \eqref{eq:jackson} holds for every $s$.
+
+\begin{intuition}
+A richer sieve fits the true payoff better, and the rate depends on two things. Smoother problems (larger $s$) are easier: there is less wiggle to capture. Problems with more decision variables (larger $d$) are harder: the exponent $s/d$ shrinks, so it takes many more terms to reach the same accuracy. This is the curse of dimensionality, and it is where a solver with a much larger sieve, such as a large model, should matter most: detailed problems with many interacting choices.
+\end{intuition}
+
+\subsection{From a good approximation to a good solution}
+
+\begin{lemma}[Approximation bound]\label{lem:approx}
+If $\sup_a|\hat W(a;\xi)-W(a;\xi)|\le\varepsilon$, then $\kappa_B(\xi)\le2\varepsilon$. In particular $\kappa_B(\xi)\le2\varepsilon_B(k)\le2C_sk^{-s/d}$.
+\end{lemma}
+
+\begin{proof}
+Three inequalities, each using one fact:
+\begin{align*}
+W(\hat a;\xi)
+&\ \ge\ \hat W(\hat a;\xi)-\varepsilon &&\text{($\hat W$ is within $\varepsilon$ of $W$ at $\hat a$)}\\
+&\ \ge\ \hat W\big(a^*(\xi);\xi\big)-\varepsilon &&\text{($\hat a$ maximizes $\hat W$)}\\
+&\ \ge\ W\big(a^*(\xi);\xi\big)-2\varepsilon &&\text{($\hat W$ is within $\varepsilon$ of $W$ at $a^*$)}.
+\end{align*}
+So $W(\hat a;\xi)\ge v(\xi)-2\varepsilon$, that is $\kappa_B(\xi)\le2\varepsilon$. The second statement follows from the definition~\eqref{eq:epsB} and the rate~\eqref{eq:jackson}.
+\end{proof}
+
+\begin{intuition}
+If your map of the terrain is never off by more than $\varepsilon$ anywhere, then the peak you find on the map is at most $2\varepsilon$ below the true peak: you can be fooled by $\varepsilon$ at your chosen point and by $\varepsilon$ at the true peak, but by no more. The factor of two is all that separates ``my model is accurate'' from ``my decision is good''. Note what \Ber{} does \emph{not} get wrong: the goal. He takes \Nap's plan as given; his errors are all in the details.
+\end{intuition}
+
+%=====================================================================
+\section{What a plan is worth}
+%=====================================================================
+
+Combining the two downstream stages, the payoff of a plan is
+\[
+Y=W(\tilde a;\xi)=v(\xi)-\big[v(\xi)-W(\hat a;\xi)\big]-\big[W(\hat a;\xi)-W(\tilde a;\xi)\big]=v(\xi)-\kappa_B(\xi)-\kappa_L(\xi).
+\]
+This identity is exact: it simply adds and subtracts $W(\hat a;\xi)$. We call the result the plan's \textbf{expected value},
+\begin{equation}\label{eq:U}
+U=u(\xi)=\E\big[W(\tilde a;\xi)\mid\xi\big]=\textcolor{nap}{v(\xi)}-\textcolor{ber}{\kappa_B(\xi)}-\textcolor{lan}{\kappa_L(\xi)}.
+\end{equation}
+In the model as written, $\hat a$ and $\tilde a$ are deterministic given $\xi$, so the expectation is trivial and $U=Y$. We keep the notation $\E[\,\cdot\mid\xi]$ because nothing below changes if either stage adds noise.
+
+\begin{intuition}
+A plan's worth is its ideal value, minus what is lost in solving it, minus what is lost in doing it. This is the number the strategist should care about. A brilliant idea that cannot be carried out, or that is too complicated to work out in detail, is not worth much.
+\end{intuition}
+
+\paragraph{Where plans come from.} Candidate plans are drawn independently from a pool, $\xi\sim F$. Each draw comes with its \emph{whole} payoff function $W(\cdot\,;\xi)$, and from it we compute $U=u(\xi)$. The distribution of $U$, which we call $G$, is therefore \emph{induced}: it depends on the pool $F$, and on how well \Ber{} and \Lan{} handle each plan. In particular, $G$ shifts whenever \Ber{} or \Lan{} improves. In general $G$ can be any distribution; Section~\ref{sec:gauss} gives conditions under which it is normal.
+
+\subsection{A local view of the losses}
+
+It helps to see the losses near the ideal solution. Expanding $W$ to second order around $a^*(\xi)$, where the gradient vanishes (if $a^*$ is interior), with $d=a-a^*(\xi)$,
+\[
+W(a;\xi)\approx v(\xi)-\tfrac12\,d^{\top}Hd,\qquad H=-\nabla_a^2W\big(a^*(\xi);\xi\big).
+\]
+If \Ber's approximation places the optimum at $\hat a=a^*(\xi)+\delta_B$, his loss is approximately $\kappa_B\approx\tfrac12\delta_B^{\top}H\delta_B$: quadratic in how far off he is, weighted by how sharply the payoff falls away from its peak. \Lan's loss is then the change in payoff from moving $\hat a$ to the nearest point of $\Rcal$.
+
+\begin{intuition}
+Solver errors come from approximation; executor errors come from infeasibility. Near the optimum, small errors are cheap (the loss is quadratic), which is why a moderately good solver already captures most of the value of a plan, and why improving him further has diminishing returns.
+\end{intuition}
+
+%=====================================================================
+\section{\texorpdfstring{The strategist: \Nap}{The strategist: Napoleon}}
+%=====================================================================
+
+\subsection{Signals and policies}
+
+\Nap{} faces an effectively unlimited supply of candidate plans, but he does not know any plan's value. What is scarce is the time to find out.
+
+\setcounter{definition}{0}\begin{definition}[Strategist, or \Nap]\label{def:napoleon}
+A strategist, or a \Nap, is a pair $N=(\tau_s,\Scal)$:
+\begin{itemize}
+  \item the \textbf{signal technology} $\Scal=\{P(\cdot\mid u)\}_u$ is a family of distributions on a signal space $\Sigma$. Given a plan with expected value $U=u$, signals $s_1,s_2,\dots\in\Sigma$ are drawn i.i.d.\ from $P(\cdot\mid u)$;
+  \item the \textbf{signal time} $\tau_s$ is how long each signal takes.
+\end{itemize}
+\end{definition}
+
+The process for one \Nap{} is a loop:
+\begin{enumerate}
+  \item draw a fresh candidate plan $\xi\sim F$, whose value $U$ is unknown;
+  \item draw signals about it, one at a time, each taking time $\tau_s$;
+  \item after each signal, decide to \emph{accept} the plan (send it to \Ber), \emph{reject} it (discard it for good), or \emph{wait} for another signal;
+  \item after accepting or rejecting, return to step~1.
+\end{enumerate}
+Write $s_{1:n}=(s_1,\dots,s_n)$.
+
+\begin{definition*}[Policy]
+A \textbf{policy} is a sequence of decision rules
+\[
+\pi=(\pi_n)_{n\ge1},\qquad\pi_n:\Sigma^n\to\{\accept,\ \text{reject},\ \text{wait}\}.
+\]
+It stops after $N_\pi=\min\{n:\pi_n(s_{1:n})\ne\text{wait}\}$ signals. Let $\Pi$ be the set of policies with $\E[N_\pi]<\infty$.
+\end{definition*}
+
+\begin{intuition}
+Think of a venture capitalist facing an endless stream of pitches, with limited time for due diligence on each and a fund that can back only a few companies a year. Each signal is a meeting, a reference check, a test. The policy says when he has learned enough to say yes or no. Waiting buys information about the current idea, but leaves less time for the next one.
+\end{intuition}
+
+\subsection{\texorpdfstring{How many plans are accepted: computing $Q(\pi)$}{How many plans are accepted: computing Q}}
+
+Three quantities determine how many plans flow out of \Nap's office per unit of time.
+
+\paragraph{The acceptance probability.} Let $P_u^n(ds_{1:n})=\prod_{k=1}^nP(ds_k\mid u)$ be the distribution of the first $n$ signals for a plan of value $u$. \Nap{} accepts at exactly the $n$-th signal on the set of histories
+\[
+A_n=\big\{s_{1:n}:\ \pi_j(s_{1:j})=\text{wait for all }j<n,\ \ \pi_n(s_{1:n})=\accept\big\}.
+\]
+The events ``accept at signal $n$'' are disjoint across $n$, so the chance that a plan of value $u$ is accepted, and the unconditional chance, are
+\begin{equation}\label{eq:paccept}
+P_\pi(\accept\mid u)=\sum_{n\ge1}P_u^n(A_n),\qquad P_\pi(\accept)=\int P_\pi(\accept\mid u)\,dG(u).
+\end{equation}
+A sharper signal technology makes $P_\pi(\accept\mid u)$ rise more steeply in $u$: good plans get accepted and bad ones rejected more reliably.
+
+\paragraph{The length of an investigation.} \Nap{} is still waiting after $m$ signals on
+\[
+W_m=\big\{s_{1:m}:\ \pi_j(s_{1:j})=\text{wait for all }j\le m\big\},\qquad W_0=\text{all histories}.
+\]
+He draws an $n$-th signal exactly when his first $n-1$ signals lie in $W_{n-1}$. Using $\E[N]=\sum_{n\ge1}P(N\ge n)$ for a positive integer random variable,
+\begin{equation}\label{eq:EN}
+\E_\pi[N_\pi]=\sum_{n\ge1}P_\pi(N_\pi\ge n)=\sum_{n\ge1}\int P_u^{\,n-1}(W_{n-1})\,dG(u).
+\end{equation}
+One investigation takes $\tau_sN_\pi$ units of time, and $\tau_s\E_\pi[N_\pi]$ on average.
+
+\paragraph{The renewal--reward theorem.} We need one result from probability to turn these per-plan quantities into rates.
+
+\begin{theorem*}[Renewal--reward]
+Let a process split into cycles $i=1,2,\dots$, where cycle $i$ lasts $T_i>0$ and earns reward $R_i$, with $(T_i,R_i)$ i.i.d.\ and $\E[T]<\infty$, $\E|R|<\infty$. Then, almost surely,
+\[
+\lim_{t\to\infty}\frac{\text{total reward earned by time }t}{t}=\frac{\E[R]}{\E[T]}.
+\]
+\end{theorem*}
+
+\begin{proof}[Proof sketch]
+Let $M(t)$ be the number of cycles completed by time $t$, so that
+\[
+\sum_{i\le M(t)}T_i\ \le\ t\ <\ \sum_{i\le M(t)+1}T_i.
+\]
+Dividing by $M(t)$ and using the strong law of large numbers, $\frac1{M(t)}\sum_{i\le M(t)}T_i\to\E[T]$, so $M(t)/t\to1/\E[T]$. Again by the strong law,
+\[
+\frac1{M(t)}\sum_{i\le M(t)}R_i\ \to\ \E[R].
+\]
+Multiplying the two limits gives the result; the reward from the incomplete last cycle is negligible relative to $t$.
+\end{proof}
+
+\begin{intuition}
+Over a long time $t$, about $t/\E[T]$ cycles fit, and each earns $\E[R]$ on average. Note that the rate is a ratio of averages, $\E[R]/\E[T]$, not an average of ratios. If half of all investigations take one signal and half take five, \Nap{} examines plans at rate $1/(3\tau_s)$, not at the average of $1/\tau_s$ and $1/(5\tau_s)$.
+\end{intuition}
+
+\paragraph{Putting it together.} Apply the renewal--reward theorem to one \Nap, with one cycle being one investigation, so $T_i=\tau_sN_i$:
+\begin{itemize}
+  \item with reward $1$ per cycle, plans are examined at rate $1/(\tau_s\E_\pi[N_\pi])$;
+  \item with reward $\mathbf 1\{\accept\}$, plans are accepted at rate $P_\pi(\accept)/(\tau_s\E_\pi[N_\pi])$;
+  \item with reward $U_i\mathbf 1\{\accept\}$, value is produced at rate $\E[U\mathbf 1\{\accept\}]/(\tau_s\E_\pi[N_\pi])$.
+\end{itemize}
+With $n_A$ strategists working in parallel, the \textbf{accepted flow} is
+\begin{equation}\label{eq:Q}
+Q(\pi)=\underset{\text{strategists}}{n_A}\times\underset{\text{plans examined by each}}{\frac{1}{\tau_s\,\E_\pi[N_\pi]}}\times\underset{\text{share accepted}}{P_\pi(\accept)}.
+\end{equation}
+
+\begin{intuition}
+$Q(\pi)$ is a \emph{rate}, not a probability. Read it as: the strategists can process $n_A/\tau_s$ signals per unit of time; each plan uses $\E_\pi[N_\pi]$ signals on average, so they examine $(n_A/\tau_s)/\E_\pi[N_\pi]$ plans per unit of time; a share $P_\pi(\accept)$ of those is accepted.
+\end{intuition}
+
+\paragraph{The value of accepted plans.} By Bayes' rule,
+\begin{equation}\label{eq:Uaccept}
+\E_\pi[U\mid\accept]=\frac{\int u\,P_\pi(\accept\mid u)\,dG(u)}{P_\pi(\accept)},
+\end{equation}
+and by iterated expectations $\E_\pi[Y\mid\accept]=\E_\pi[U\mid\accept]$. Output per unit of time is the accepted flow times the average value of an accepted plan:
+\begin{equation}\label{eq:output}
+\Ycal(\pi)=Q(\pi)\,\E_\pi[U\mid\accept]=\frac{n_A}{\tau_s\,\E_\pi[N_\pi]}\int u\,P_\pi(\accept\mid u)\,dG(u).
+\end{equation}
+
+\subsection{\texorpdfstring{Capacity and \Nap's problem}{Capacity and Napoleon's problem}}
+
+Accepted plans must be solved by \Ber{} and carried out by \Lan. Downstream, plans can be processed at most at the rate of the slower stage:
+\begin{equation}\label{eq:K}
+K=\min\{\mu_B,\ \mu_L\}=\min\Big\{\frac{n_B}{\tau_B},\ \frac{n_L}{\tau_L}\Big\}.
+\end{equation}
+
+\paragraph{Problem N (investigation).}
+\begin{equation}\label{eq:problemN}
+\max_{\pi\in\Pi}\ Q(\pi)\,\E_\pi[U\mid\accept]\qquad\text{subject to}\qquad Q(\pi)\le K.
+\end{equation}
+Dividing the constraint by the examination rate gives an equivalent per-plan form:
+\[
+P_\pi(\accept)\ \le\ \frac{K\,\tau_s\,\E_\pi[N_\pi]}{n_A}.
+\]
+\Nap{} may accept at most the share of plans that downstream capacity can absorb.
+
+\begin{intuition}
+Why would \Nap{} ever reject a plan? For two reasons. First, capacity is scarce: every plan he accepts takes a slot that a better plan could have used, so a merely decent plan is rejected because something better will come along. Second, some plans lose value: $U$ is net of the solver's and executor's losses, so a typical idea can be worth less than nothing once it is actually worked out and carried out. If capacity were unlimited and every plan had positive value, he would accept everything, and he would have no reason to investigate at all. Screening is valuable precisely because capacity is scarce and many ideas are bad.
+\end{intuition}
+
+%=====================================================================
+\section{A worked example: Gaussian plans and signals}\label{sec:gauss}
+%=====================================================================
+
+This section derives closed forms for everything above under conditions that make $U$ normal.
+
+\subsection{\texorpdfstring{When is $U$ normal?}{When is U normal?}}
+
+$U$ is a derived quantity, so its distribution must come from the primitives. Suppose plans differ only in their \emph{level}:
+\begin{equation}\label{eq:level}
+W(a;\xi)=v(\xi)+w(a),\qquad v(\xi)\sim N(m,\sigma^2),
+\end{equation}
+with a common action set $\Acal$ and a common shape $w$ normalized so that $\max_aw(a)=0$.
+
+\begin{lemma*}[Gaussian plans]
+Under~\eqref{eq:level}, if the sieve $\mathcal{W}_k$ is closed under adding constants, then $\hat a$ and $\tilde a$ are the same for every plan, both losses are constants, and
+\[
+U=v(\xi)-\kappa_B-\kappa_L\ \sim\ N\big(m-\kappa,\ \sigma^2\big),\qquad\kappa=\kappa_B+\kappa_L.
+\]
+\end{lemma*}
+
+\begin{proof}
+If $f$ is a best approximation to $w$ from the sieve, then $v(\xi)+f$ is a best approximation to $v(\xi)+w$, because $\sup_a|(v+f)-(v+w)|=\sup_a|f-w|$ and adding a constant maps the sieve into itself. So $\hat W(\cdot;\xi)=v(\xi)+f$, whose maximizer $\hat a$ does not depend on $v(\xi)$. Problem L depends only on $\hat a$ and $\Rcal$, so $\tilde a$ does not depend on $\xi$ either. Then $\kappa_B=v(\xi)-W(\hat a;\xi)=-w(\hat a)$ and $\kappa_L=w(\hat a)-w(\tilde a)$ are constants, and $U=v(\xi)+w(\tilde a)=v(\xi)-\kappa_B-\kappa_L$ is a shift of a normal variable.
+\end{proof}
+
+\begin{intuition}
+If all plans look alike in their details and differ only in how much they are worth, then the solver and executor handle them all identically, so they lose the same amount on each. The only thing left to screen on is the level, and that is normal by assumption. Outside these conditions $U$ need not be normal; for example, in Section~\ref{sec:physical}, more ambitious plans lose more in execution, which thins the upper tail of $U$.
+\end{intuition}
+
+Write $m_U=m-\kappa$ and $\sigma_U=\sigma$ from now on.
+
+\subsection{Signals and the posterior mean}
+
+Let signals be normal around the plan's expected value:
+\[
+s_k=U+\eta_k,\qquad\eta_k\sim N(0,\sigma_\eta^2)\ \text{i.i.d.},\qquad r=\sigma_\eta^2/\sigma_U^2.
+\]
+The ratio $r$ is the noise-to-signal ratio of a single signal.
+
+\paragraph{Derivation of the posterior.} With a normal prior and normal signals, the posterior of $U$ after $n$ signals is normal. Its precision (inverse variance) is the sum of the prior precision and the signals' precisions, and its mean is the precision-weighted average of the prior mean and the signal average $\bar s_n=\frac1n\sum_{k\le n}s_k$:
+\[
+\mu_n=\E[U\mid s_{1:n}]=\frac{\sigma_U^{-2}m_U+n\sigma_\eta^{-2}\bar s_n}{\sigma_U^{-2}+n\sigma_\eta^{-2}}=m_U+\rho_n(\bar s_n-m_U),\qquad\rho_n=\frac{n\sigma_U^2}{n\sigma_U^2+\sigma_\eta^2}=\frac{n}{n+r}.
+\]
+
+\paragraph{Distribution of the estimate.} Before signals arrive, $\bar s_n=U+\bar\eta_n\sim N(m_U,\ \sigma_U^2+\sigma_\eta^2/n)$. Hence $\mu_n$ is normal with mean $m_U$ and variance
+\[
+\Var(\mu_n)=\rho_n^2\Big(\sigma_U^2+\frac{\sigma_\eta^2}{n}\Big)=\rho_n^2\cdot\frac{\sigma_U^2}{\rho_n}=\rho_n\sigma_U^2.
+\]
+(The middle step uses $\sigma_U^2+\sigma_\eta^2/n=\sigma_U^2/\rho_n$.)
+
+\begin{intuition}
+$\rho_n\in(0,1)$ is the \emph{accuracy} of \Nap's estimate: the share of the true variation in plan values that his estimate captures. With one very noisy signal, $\rho_n$ is near zero and his estimates barely differ across plans; with many signals, $\rho_n$ approaches one and he can see the plans' true differences. Equivalently, $\sqrt{\rho_n}$ is the correlation between his estimate and the truth.
+\end{intuition}
+
+\subsection{Napoleon's speed--accuracy trade-off}
+
+Restrict \Nap{} to policies that take exactly $n$ signals per plan and then accept if the estimate clears a cutoff, $\mu_n\ge z$. (General sequential policies can do better, but the bounds in Section~\ref{sec:results} hold for all policies.)
+
+\paragraph{Step 1: how selective he can be.} Each plan takes $n\tau_s$, so the strategists examine
+\[
+R_n=\frac{n_A}{n\,\tau_s}
+\]
+plans per unit of time. Capacity lets $K$ through, so when capacity binds \Nap{} accepts the top share
+\[
+q_n=\frac{K}{R_n}=\frac{K\,n\,\tau_s}{n_A}
+\]
+of examined plans. He does so with a cutoff on his estimate, and never accepts a plan he expects to be worth less than nothing:
+\begin{equation}\label{eq:cutoff}
+\accept\iff\mu_n\ge z_n,\qquad z_n=\max\Big\{0,\ m_U+\sigma_U\sqrt{\rho_n}\,\Phi^{-1}(1-q_n)\Big\}.
+\end{equation}
+The second term in the max is the cutoff that makes exactly a share $q_n$ of estimates clear it, since $\mu_n\sim N(m_U,\rho_n\sigma_U^2)$. The zero is there because accepting a plan with negative expected value lowers output even if a slot is free.
+
+\paragraph{Step 2: how good his picks are.} Because the acceptance decision depends only on the signals, and $\E[U\mid s_{1:n}]=\mu_n$, the law of iterated expectations gives
+\[
+\E[U\mid\accept]=\E\big[\mu_n\mid\mu_n\ge z_n\big].
+\]
+Write $\mu_n=m_U+\sigma_U\sqrt{\rho_n}\,X$ with $X\sim N(0,1)$. When capacity binds, accepting means $X\ge c$ with $c=\Phi^{-1}(1-q_n)$. For a standard normal, the truncated mean is the inverse Mills ratio:
+\[
+\E[X\mid X\ge c]=\frac{1}{1-\Phi(c)}\int_c^\infty x\,\phi(x)\,dx=\frac{\phi(c)}{1-\Phi(c)},
+\]
+using $\int_c^\infty x\phi(x)dx=\big[-\phi(x)\big]_c^\infty=\phi(c)$. With $1-\Phi(c)=q_n$ this is
+\[
+S(q_n)=\frac{\phi\big(\Phi^{-1}(1-q_n)\big)}{q_n},
+\]
+the mean of the top share $q_n$ of a standard normal, in standard deviations. For example $S(0.05)=2.06$, $S(0.15)=1.55$, $S(0.5)=0.80$, and $S(1)=0$. Therefore
+\[
+\E[U\mid\accept]=m_U+\sigma_U\sqrt{\rho_n}\;S(q_n).
+\]
+
+\paragraph{Step 3: output.} Output is the accepted flow, $K$, times the value of each accepted plan:
+\begin{equation}\label{eq:tradeoff}
+\Ycal(n)=K\Big(m_U+\sigma_U\,\sqrt{\rho_n}\;S(q_n)\Big).
+\end{equation}
+Each term has a meaning:
+\begin{itemize}
+  \item $K$: plans carried out per unit of time;
+  \item $m_U$: the value of an average plan;
+  \item $\sigma_U$: how much plans differ, which is what there is to gain from choosing well;
+  \item $\sqrt{\rho_n}$: how much of that difference \Nap{} can see after $n$ signals;
+  \item $S(q_n)$: how far above average, in standard deviations, the plans he picks are.
+\end{itemize}
+Formula~\eqref{eq:tradeoff} assumes capacity binds and the capacity cutoff is positive. Otherwise the cutoff is zero, fewer than $K$ plans are accepted, and output is $R_n\,\E[\mu_n\mathbf 1\{\mu_n\ge0\}]=R_n\big[m_U(1-\Phi(c_0))+\sigma_U\sqrt{\rho_n}\,\phi(c_0)\big]$ with $c_0=-m_U/(\sigma_U\sqrt{\rho_n})$.
+
+\begin{intuition}
+More signals per plan raise accuracy $\sqrt{\rho_n}$, but they also mean fewer plans examined, so \Nap{} must accept a larger share $q_n$ and the selectivity premium $S(q_n)$ falls. Too few signals and he cannot tell plans apart; too many and he sees too few plans to be choosy. The optimal $n$ balances the two.
+\end{intuition}
+
+\paragraph{Choosing $n$: a numerical example.} Take $m_U=-2.5$, $\sigma_U=4$, $r=4$, $\tau_s=0.05$, $n_A=1$, and $K=1$. Then:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}c r r r r r@{}}
+\toprule
+$n$ & $R_n$ & $q_n$ & $\sqrt{\rho_n}$ & $S(q_n)$ & $\Ycal(n)$\\
+\midrule
+1 & 20.0 & 0.05 & 0.45 & 2.06 & 1.19\\
+2 & 10.0 & 0.10 & 0.58 & 1.76 & 1.55\\
+\textbf{3} & \textbf{6.7} & \textbf{0.15} & \textbf{0.65} & \textbf{1.55} & \textbf{1.57}\\
+4 & 5.0 & 0.20 & 0.71 & 1.40 & 1.46$^*$\\
+5 & 4.0 & 0.25 & 0.75 & 1.27 & 1.34$^*$\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent{\small $^*$The capacity cutoff is negative, so the cutoff is zero and fewer than $K$ plans are accepted; output uses the formula below~\eqref{eq:tradeoff}.}
+
+With $n=3$, each plan takes $0.15$ years, so \Nap{} examines about $6.7$ plans a year and accepts the top $15\%$, with cutoff $z\approx-2.5+4(0.65)(1.04)\approx0.21$. That gives exactly one accepted plan a year, $Q=0.15/(3\times0.05)=1=K$, and output $1.57$.
+
+%=====================================================================
+\section{Technologies: AI, vision, RSI, and physical progress}
+%=====================================================================
+
+Each kind of progress improves exactly one agent's technology.
+
+\setcounter{definition}{3}\begin{definition}[AI]
+\textbf{AI} is an improvement to \Ber: it replaces $(\tau_B,k)$ with $(\tau_B',k')$ where $\tau_B'\le\tau_B$ or $k'\ge k$. \Nap{} and \Lan{} are unchanged.
+\end{definition}
+
+\begin{definition}[Vision]
+\textbf{Vision} is an improvement to \Nap: it replaces $(\tau_s,\Scal)$ with $(\tau_s',\Scal')$ where $\tau_s'\le\tau_s$, or $\Scal'$ is Blackwell more informative than $\Scal$ (so $\Scal$ is a garbling of $\Scal'$). \Ber{} and \Lan{} are unchanged.
+\end{definition}
+
+\begin{definition}[RSI]
+\textbf{RSI} is AI and vision together: a better \Ber{} and a better \Nap, with \Lan{} unchanged.
+\end{definition}
+
+\begin{definition}[Physical progress]
+\textbf{Physical progress} is an improvement to \Lan: $\Rcal'\supseteq\Rcal$ or $\tau_L'\le\tau_L$.
+\end{definition}
+
+\begin{intuition}
+AI solves faster ($\mu_B$ rises, which matters only while \Ber{} is the bottleneck) or with richer models ($\varepsilon_B$ falls, which tightens the bound on $\kappa_B$). Vision screens plans faster or judges them more sharply. Neither changes what can physically be done.
+\end{intuition}
+
+%=====================================================================
+\section{Results}\label{sec:results}
+%=====================================================================
+
+\subsection{Assumptions}
+
+\begin{assumption}\label{ass:results}
+\begin{enumerate}
+  \item[(a)] \Lan{} is fixed: $\tau_L$ and $\Rcal$ do not change over time (except in Section~\ref{sec:physical}).
+  \item[(b)] $\E|v(\xi)|<\infty$ under $F$, and output starts positive.
+  \item[(c)] For Propositions~\ref{prop:judgment}--\ref{prop:thin}: best feasible values have thin tails. That is, $\bar U(\xi)=\max_{r\in\Rcal}W(r;\xi)$ is $\sigma$-sub-Gaussian around its mean $\bar m=\E[\bar U]$:
+  \[
+  \E\Big[e^{\theta(\bar U-\bar m)}\Big]\le e^{\theta^2\sigma^2/2}\qquad\text{for all }\theta\in\mathbb{R}.
+  \]
+  Moreover, screening outpaces capacity: $n_A/\tau_s\ge\sqrt e\,n_L/\tau_L$.
+\end{enumerate}
+The \textbf{output growth rate} is $g_{\Ycal}=\limsup_{t\to\infty}\frac1t\ln\Ycal_t$. Write $\bar R=n_A/\tau_s$ for the fastest possible rate of examining plans (every plan needs at least one signal).
+\end{assumption}
+
+\begin{intuition}
+A normal distribution with variance $\sigma^2$ is $\sigma$-sub-Gaussian; so is any bounded distribution. Sub-Gaussian means the chance of a very valuable plan falls off at least as fast as a normal tail: there are no rare, enormously valuable ideas. Note that the assumption is placed on $\bar U$, which depends only on the plans and the budget set, not on \Ber{} or \Nap. Whatever \Ber{} does, $U\le\bar U$, because the realized action always lies in $\Rcal$.
+\end{intuition}
+
+\subsection{Two lemmas}
+
+\begin{lemma}[Selection bound]\label{lem:selection}
+Let $Z-\E[Z]$ be $\sigma$-sub-Gaussian, and let $A$ be any event with $P(A)=q\in(0,1]$. Then
+\[
+\E[Z\mid A]\ \le\ \E[Z]+\sigma\sqrt{2\ln(1/q)}.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $X=Z-\E[Z]$ and fix $\theta>0$. Since $x\mapsto e^{\theta x}$ is convex, Jensen's inequality applied to the conditional distribution given $A$ gives
+\[
+e^{\theta\E[X\mid A]}\ \le\ \E\big[e^{\theta X}\mid A\big]=\frac{\E\big[e^{\theta X}\mathbf 1_A\big]}{q}\ \le\ \frac{\E\big[e^{\theta X}\big]}{q},
+\]
+where the last step uses $e^{\theta X}\ge0$. Taking logs and using the sub-Gaussian bound $\ln\E[e^{\theta X}]\le\theta^2\sigma^2/2$,
+\[
+\E[X\mid A]\ \le\ \frac{\theta\sigma^2}{2}+\frac{\ln(1/q)}{\theta}.
+\]
+The right side is minimized at $\theta=\sqrt{2\ln(1/q)}/\sigma$, where it equals $\sigma\sqrt{2\ln(1/q)}$. (If $q=1$ the bound is $0$, which is trivially true.)
+\end{proof}
+
+\begin{intuition}
+No matter how cleverly you select, and no matter what you know, the best a share $q$ of a thin-tailed population can average is about $\sigma\sqrt{2\ln(1/q)}$ above the mean. Becoming ten times more selective (dividing $q$ by ten) adds only a little to $\sqrt{\ln(1/q)}$. This is the mathematical core of every ceiling below: with thin tails, more selection has sharply diminishing returns.
+\end{intuition}
+
+\begin{lemma}[Screening bound]\label{lem:screening}
+For any policy, $\Ycal\le\bar R\,\E[U^+]$, where $U^+=\max\{U,0\}$.
+\end{lemma}
+
+\begin{proof}
+Each plan needs at least one signal, so $\E_\pi[N_\pi]\ge1$ and plans are examined at rate $R=n_A/(\tau_s\E_\pi[N_\pi])\le\bar R$. With $A=\{\accept\}$, $Q=R\,P(A)$, so
+\[
+\Ycal=Q\,\E[U\mid A]=R\,\E[U\mathbf 1_A]\ \le\ R\,\E[U^+]\ \le\ \bar R\,\E[U^+].\qedhere
+\]
+\end{proof}
+
+\subsection{Result 1: AI alone cannot sustain growth}
+
+\begin{proposition}\label{prop:ai}
+Fix \Nap{} and \Lan. Along any path of AI, for all $t$,
+\[
+\Ycal_t\ \le\ \frac{n_A}{\tau_s}\;\E_{\xi\sim F}\Big[\max\Big\{0,\ \max_{r\in\Rcal}W(r;\xi)\Big\}\Big]\ <\ \infty,
+\]
+so $g_{\Ycal}\le0$.
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item Whatever \Ber{} does, the executed action lies in $\Rcal$, so $Y\le\bar U(\xi)$ and hence $U_t\le\bar U$ at every date.
+  \item By Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R\,\E[U_t^+]\le\bar R\,\E[\bar U^+]$. The right side is the displayed bound, and it does not depend on $t$, because $\bar R$ depends only on \Nap, and $\bar U$ only on the plans and on $\Rcal$.
+  \item By~\eqref{eq:Ubar}, $\bar U\le v$, so $\E[\bar U^+]\le\E[v^+]\le\E|v|<\infty$.
+  \item A bounded sequence satisfies $\frac1t\ln\Ycal_t\le\frac1t\ln C\to0$. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+AI can do two things: let more plans through, up to the executor's capacity, and make each plan's details better, up to its best feasible value. Both have a ceiling that AI cannot move: one set by \Lan's capacity, the other by what $\Rcal$ allows. So AI raises output once and then stops. The bound shown is loose (it ignores capacity), but any finite ceiling forces the growth rate to zero. In the illustration of Section~\ref{sec:illustration}, AI levels off at $4.47$.
+\end{intuition}
+
+\subsection{Result 2: sharper judgment has a ceiling}
+
+\begin{proposition}\label{prop:judgment}
+Fix the signal time $\tau_s$. For any \Ber{} and any signal technology, including perfect information,
+\[
+\Ycal\ \le\ K\bigg(\max\Big\{0,\ \E_{\xi\sim F}\Big[\max_{r\in\Rcal}W(r;\xi)\Big]\Big\}+\sigma\sqrt{2\ln\frac{n_A}{K\tau_s}}\bigg).
+\]
+\end{proposition}
+
+\begin{proof}
+Let $R$ be the examination rate and $q=P(\accept)$, so $Q=qR\le K$ and $R\le\bar R$. Since $U\le\bar U$, Lemma~\ref{lem:selection} applied to $Z=\bar U$ gives
+\[
+\Ycal=Q\,\E[U\mid A]\le Q\,\E[\bar U\mid A]\le Q\big(\bar m+\sigma\sqrt{2\ln(1/q)}\big)\le Q\,\bar m^++\sigma f(Q,R),
+\]
+where $f(Q,R)=Q\sqrt{2\ln(R/Q)}$ and we used $q=Q/R$. It remains to bound $f$.
+\begin{itemize}
+  \item $f$ is increasing in $R$: $\partial f/\partial R=Q/\big(R\sqrt{2\ln(R/Q)}\big)>0$.
+  \item Write $L=\ln(R/Q)$. Then $\partial f/\partial Q=\sqrt{2L}-1/\sqrt{2L}$, which is positive exactly when $L>1/2$, i.e.\ when $Q<R/\sqrt e$. So $f(\cdot,R)$ rises up to $Q=R/\sqrt e$, where it equals $R/\sqrt e$, and falls after.
+\end{itemize}
+By Assumption~\ref{ass:results}(c), $K\le\mu_L\le\bar R/\sqrt e$, so $f(\cdot,\bar R)$ is increasing on $[0,K]$. Two cases:
+\begin{itemize}
+  \item If $Q\le R/\sqrt e$: $f(Q,R)\le f(Q,\bar R)\le f(K,\bar R)$.
+  \item If $Q>R/\sqrt e$: $f(Q,R)\le R/\sqrt e<Q\le K\le K\sqrt{2\ln(\bar R/K)}=f(K,\bar R)$, using $\ln(\bar R/K)\ge1/2$.
+\end{itemize}
+In both cases $f(Q,R)\le K\sqrt{2\ln(\bar R/K)}$, and $Q\,\bar m^+\le K\,\bar m^+$. Substituting $\bar R=n_A/\tau_s$ gives the result.
+\end{proof}
+
+\begin{intuition}
+Better judgment lets \Nap{} pick the truly best of the plans he examines, but it cannot make the plans he examines better. Even with perfect information, the best he can do is sort them perfectly, and Lemma~\ref{lem:selection} says that the top share of a thin-tailed pool is only so good. The ceiling depends on how many plans he can examine ($n_A/\tau_s$) and on how many he can pass on ($K$), and on nothing about his signals.
+\end{intuition}
+
+\subsection{Result 3: with thin tails, nothing cognitive sustains growth}
+
+\begin{proposition}\label{prop:thin}
+Suppose signals speed up at most exponentially, $\tau_{s,t}\ge\tau_{s,0}e^{-gt}$, and \Nap's technology only improves over time. Then for any paths of AI and vision,
+\[
+\Ycal_t\ \le\ \frac{n_L}{\tau_L}\bigg(\max\Big\{0,\ \E_{\xi\sim F}\Big[\max_{r\in\Rcal}W(r;\xi)\Big]\Big\}+\sigma\sqrt{2\ln\frac{n_A\tau_L}{n_L\tau_{s,0}}+2gt}\bigg).
+\]
+In particular output grows at most like $\sqrt t$, and $g_{\Ycal}\le0$.
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item Proposition~\ref{prop:judgment} holds at each date $t$, for whatever \Ber{} and signal technology are in place, with $\bar R_t=n_A/\tau_{s,t}$.
+  \item The bound $B(K,\bar R)=K\big(\bar m^++\sigma\sqrt{2\ln(\bar R/K)}\big)$ is increasing in $K$ for $K\le\bar R/\sqrt e$, by the derivative computed above (the first term is increasing in $K$ as well). Since $K_t\le\mu_L$ and $\mu_L\le\bar R_0/\sqrt e\le\bar R_t/\sqrt e$, we may replace $K_t$ by $\mu_L$.
+  \item The quantity $\bar m=\E[\bar U]$ does not change over time, because $\bar U$ depends only on $F$ and $\Rcal$.
+  \item Substituting $\bar R_t\le\bar R_0e^{gt}$ gives $\ln(\bar R_t/\mu_L)\le\ln(\bar R_0/\mu_L)+gt$, which is the displayed bound.
+  \item A bound of order $\sqrt t$ satisfies $\frac1t\ln\Ycal_t\le\frac1t\ln(c_1+c_2\sqrt t)\to0$. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+Exponentially faster screening means \Nap{} examines exponentially more plans, but with thin tails the best of $e^{gt}$ plans improves only like $\sqrt{2gt}$. Better solving cannot help, because it cannot lift plans above their best feasible value; better judgment cannot help, by Proposition~\ref{prop:judgment}. So AI, vision, and RSI all level off. Their levels differ, possibly by a lot, but their long-run growth rate is zero.
+\end{intuition}
+
+\subsection{Heavy tails change this}\label{sec:heavy}
+
+\begin{proposition*}[Heavy tails]
+Suppose expected values have a Pareto tail, $P(U>x)=(x/x_m)^{-\alpha}$ for $x\ge x_m>0$, with $\alpha>1$, and capacity $K$ is fixed. If screening speeds up at rate $g$, $\bar R_t=\bar R_0e^{gt}$, then $g_{\Ycal}\le g/\alpha$, with equality under perfectly informative signals.
+\end{proposition*}
+
+\begin{proof}
+\begin{enumerate}
+  \item \emph{Top-share mean.} The top share $q$ of $U$ lies above $c_q$ with $(c_q/x_m)^{-\alpha}=q$, i.e.\ $c_q=x_mq^{-1/\alpha}$. For a Pareto distribution, $\E[U\mid U\ge c]=\frac{\alpha}{\alpha-1}c$, so the mean of the top share is
+  \[
+  M(q)=\frac{\alpha}{\alpha-1}\,x_m\,q^{-1/\alpha}.
+  \]
+  \item \emph{No selection beats perfect sorting.} Let $A$ be any event with $P(A)=q$. Then $(U-c_q)(\mathbf 1\{U\ge c_q\}-\mathbf 1_A)\ge0$ pointwise, and $\E[\mathbf 1\{U\ge c_q\}-\mathbf 1_A]=0$, so $\E[U\mathbf 1_A]\le\E[U\mathbf 1\{U\ge c_q\}]$, that is $\E[U\mid A]\le M(q)$.
+  \item \emph{Upper bound.} With $q=Q/R\ge Q/\bar R$ and $M$ decreasing, $\Ycal=Q\,\E[U\mid A]\le Q\,M(Q/\bar R)=\frac{\alpha}{\alpha-1}x_m\,Q^{1-1/\alpha}\bar R^{1/\alpha}$, which is increasing in $Q$, so $\Ycal_t\le K\,M(K/\bar R_t)\propto\bar R_t^{1/\alpha}=\bar R_0^{1/\alpha}e^{gt/\alpha}$.
+  \item \emph{Attained.} With perfectly informative signals, one signal reveals $U$, so $\E[N]=1$, plans are examined at rate $\bar R_t$, and \Nap{} accepts exactly the top share $K/\bar R_t$. Since $U\ge x_m>0$, the cutoff is positive, so $\Ycal_t=K\,M(K/\bar R_t)$, which grows at exactly $g/\alpha$. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+With a heavy tail, there are always rare ideas that are vastly better than the rest, and the more ideas you look at, the better the best one you find, by a power of the pool size rather than a logarithm. So faster screening can sustain growth, at rate $g/\alpha$: the heavier the tail (smaller $\alpha$), the faster. Lasting growth from vision needs both faster screening \emph{and} rare, enormously valuable plans.
+\end{intuition}
+
+%=====================================================================
+\section{Physical constraints}\label{sec:physical}
+%=====================================================================
+
+The heavy-tail proposition leaves a way out: heavy-tailed ideas. This section shows that once the physical frontier is taken into account, that way out is closed.
+
+\subsection{A one-dimensional budget set}
+
+Let actions be real numbers, $\Acal=[\underline a,\overline a]$. \Ber{} can propose any $\hat a\in\Acal$, but \Lan's budget set is finite:
+\[
+\Rcal=\{r_1<r_2<\dots<r_J\},\qquad\tilde a=\arg\min_{r\in\Rcal}|r-\hat a|.
+\]
+$\Rcal$ is the set of physical technologies that exist. The \textbf{physical frontier} is $\bar r=\max\Rcal$: anything beyond it is carried out at $\bar r$.
+
+\subsection{Better plans sit further out}
+
+Let a plan's ideal action measure its \textbf{ambition}, and let value rise with ambition:
+\begin{equation}\label{eq:ambition}
+v(\xi)=\beta\,a^*(\xi),\qquad W(a;\xi)=v(\xi)-\tfrac H2\big(a-a^*(\xi)\big)^2,\qquad\beta,H>0.
+\end{equation}
+
+\begin{intuition}
+More valuable plans call for more extreme actions: a faster aircraft needs a stronger material, a bigger campaign needs more supply. Plotted against ambition $a^*$, potential value rises in a straight line. Realized value tracks it while a feasible technology is close by, dips between feasible points, peaks just beyond the frontier at $a^*=\bar r+\beta/H$, and then \emph{falls}: an idea that demands far more than any technology can deliver is worth less than a modest idea that can actually be done. Because \Nap's signals are about $U$, he learns about the realized curve, not the potential line, and does not chase plans beyond the frontier.
+\end{intuition}
+
+\begin{proposition}[The physical frontier bounds output]\label{prop:frontier}
+Under~\eqref{eq:ambition}, for any \Nap, any \Ber, and any distribution of plans,
+\[
+U,\ Y\ \le\ \beta\bar r+\frac{\beta^2}{2H}\qquad\text{and}\qquad\Ycal\ \le\ \mu_L\Big(\beta\bar r+\frac{\beta^2}{2H}\Big).
+\]
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item The realized action is some $r\in\Rcal$, so $r\le\bar r$.
+  \item For fixed $r$, the payoff as a function of the plan's ambition, $\beta a^*-\frac H2(r-a^*)^2$, is concave in $a^*$ with derivative $\beta+H(r-a^*)$, which is zero at $a^*=r+\beta/H$. Its maximum value is
+  \[
+  \beta\Big(r+\frac\beta H\Big)-\frac H2\Big(\frac\beta H\Big)^2=\beta r+\frac{\beta^2}{2H}.
+  \]
+  So $Y\le\beta r+\beta^2/(2H)\le\beta\bar r+\beta^2/(2H)$ for every plan, and the same holds for its expectation $U$.
+  \item At most $\mu_L$ plans are carried out per unit of time, so $\Ycal=Q\,\E[Y\mid\accept]\le\mu_L\big(\beta\bar r+\beta^2/(2H)\big)$. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{corollary}[Without physical progress, nothing grows]
+If $\bar r_t\le\bar r_0e^{g_Rt}$ and $\mu_{L,t}\le\mu_{L,0}e^{g_Lt}$ with $\bar r_0>0$, then for any paths of AI and vision,
+\[
+\limsup_{t\to\infty}\tfrac1t\ln\Ycal_t\ \le\ g_R+g_L.
+\]
+Without physical progress ($g_R=g_L=0$), $g_{\Ycal}=0$ under AI, vision, or RSI.
+\end{corollary}
+
+\begin{proof}
+By Proposition~\ref{prop:frontier}, $\Ycal_t\le\mu_{L,0}e^{g_Lt}\big(\beta\bar r_0e^{g_Rt}+\beta^2/(2H)\big)$. Taking logs, dividing by $t$, and letting $t\to\infty$ gives $g_L+g_R$.
+\end{proof}
+
+\begin{intuition}
+Heavy-tailed potential value does not help if the tail lies beyond what can be done. Whatever the strategist dreams up and however precisely the solver works it out, what reaches the world is capped by the best available technology. Long-run growth therefore requires moving the frontier: new materials, new machines, more capacity to act.
+\end{intuition}
+
+%=====================================================================
+\section{A numerical illustration}\label{sec:illustration}
+%=====================================================================
+
+To see the results at work, take the Gaussian example of Section~\ref{sec:gauss} and let technology improve over 60 years.
+
+\paragraph{Parameters.} One strategist ($n_A=1$). Gaussian plans with $m=0$ and $\sigma=4$, so $U\sim N(-\kappa,4^2)$. At year 0: signal noise $r=4$ and signal time $\tau_s=0.05$; \Ber{} has $\mu_B=1$ and $\kappa_B=1.5$; \Lan{} has $\mu_L=2$ and $\kappa_L=1$, so $\kappa=2.5$ and $K=\min\{1,2\}=1$: \Ber{} is the bottleneck.
+
+\paragraph{Improvements.} Each year:
+\begin{itemize}
+  \item \textbf{AI}: $\mu_B$ is multiplied by $1.25$ and $\kappa_B$ divided by $1.25$ (a richer sieve);
+  \item \textbf{vision}: $\tau_s$ and $r$ are divided by $1.1$ (faster and sharper signals);
+  \item \textbf{RSI}: both;
+  \item \Lan{} never changes.
+\end{itemize}
+Each year \Nap{} re-chooses the number of signals per plan to maximize output, using the cutoff~\eqref{eq:cutoff}.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}l r r r r r r@{}}
+\toprule
+& Year 0 & 10 & 20 & 40 & 60 & Growth, years 50--60\\
+\midrule
+No progress & 1.57 & 1.57 & 1.57 & 1.57 & 1.57 & 0\%\\
+\textcolor{ber}{AI} & 1.57 & 4.14 & 4.43 & 4.47 & 4.47 & 0\%\\
+\textcolor{nap}{Vision} & 1.57 & 4.02 & 6.38 & 10.30 & 12.75 & 0.9\%\\
+RSI & 1.57 & 8.95 & 13.98 & 22.08 & 27.12 & 0.9\%\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Reading the table.}
+\begin{itemize}
+  \item \textbf{AI} removes \Ber{} as the bottleneck (capacity rises from 1 to 2) and shrinks his losses towards zero. Output nearly triples, then stops at $4.47$: output with $K=2$, $\kappa=1$, and year-0 screening. That is Proposition~\ref{prop:ai} at work.
+  \item \textbf{Vision} grows fast at first, as sharper signals pay off, then slows to under $1\%$ a year: sharper signals hit the full-information ceiling (Proposition~\ref{prop:judgment}) and faster screening helps only like $\sqrt t$ (Proposition~\ref{prop:thin}).
+  \item \textbf{RSI} has a higher level than vision, because AI doubles the number of plans carried out and removes solution losses, but the same fading growth.
+\end{itemize}
+These parameters are illustrative, not a forecast.
+
+%=====================================================================
+\section{A research sector}\label{sec:research}
+%=====================================================================
+
+So far every plan had to be carried out physically. Much valuable work does not: proving a theorem, designing a circuit, writing software, running a simulation. In such work, once the details are worked out, the job is done. We call this the \textbf{research sector}: \Nap{} picks the question and \Ber's solution \emph{is} the output.
+
+\subsection{Setup}
+
+The research sector is the same model with no executor. Formally, take $\Rcal=\Acal(\xi)$ (every action is feasible) and $\mu_L=\infty$ (no execution capacity limit). Then $\tilde a=\hat a$, $\kappa_L=0$, and
+\[
+Y=W(\hat a;\xi),\qquad U=v(\xi)-\kappa_B(\xi),\qquad \bar U(\xi)=v(\xi),\qquad K=\mu_B=\frac{n_B}{\tau_B}.
+\]
+The best feasible value is the ideal value itself, because nothing restricts which actions can be taken. Downstream capacity is \Ber's capacity alone.
+
+\begin{intuition}
+In production, three things limit output: how fast ideas are screened, how fast they are solved, and how fast they can be carried out. Research removes the third. The only constraints left are cognitive: \textcolor{nap}{screening} and \textcolor{ber}{solving}. That is exactly where AI and vision act, so research is where they should matter most.
+\end{intuition}
+
+\subsection{AI relaxes Napoleon's constraint}
+
+\Nap's capacity constraint is $Q(\pi)\le K$. In production, $K=\min\{\mu_B,\mu_L\}\le\mu_L$: AI can lift capacity only until \Lan{} binds. In research, $K=\mu_B$, so AI lifts capacity without limit. On the other side, every policy satisfies
+\[
+Q(\pi)\ \le\ R(\pi)=\frac{n_A}{\tau_s\,\E_\pi[N_\pi]}\ \le\ \frac{n_A}{\tau_s},
+\]
+because each plan needs at least one signal. So once $\mu_B\ge n_A/\tau_s$, the capacity constraint can never bind.
+
+\begin{proposition}[AI lifts research to Napoleon's ceiling]\label{prop:resceiling}
+In research, fix \Nap. Along any path of AI, for all $t$,
+\[
+\Ycal_t\ \le\ \frac{n_A}{\tau_s}\;\E_{\xi\sim F}\big[\max\{0,\ v(\xi)\}\big],
+\]
+and once $\mu_{B,t}\ge n_A/\tau_s$, \Nap's capacity constraint is slack for every policy.
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item In research $U=v-\kappa_B\le v$, because $\kappa_B\ge0$ by~\eqref{eq:kappaB}.
+  \item By Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R\,\E[U_t^+]\le\bar R\,\E[v^+]$ with $\bar R=n_A/\tau_s$, whatever \Ber{} does. The bound is finite by Assumption~\ref{ass:results}(b).
+  \item For every policy, $Q(\pi)\le R(\pi)\le n_A/\tau_s$. If $\mu_{B,t}\ge n_A/\tau_s$, then $Q(\pi)\le K_t$ for every policy, so the constraint in Problem N is slack. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+When solving becomes cheap and fast, \Nap{} no longer has to ration. He stops being picky: he accepts every plan he expects to be worth something, and he spends fewer signals on each plan, because the point of investigating was to choose among plans competing for scarce slots. His binding constraint becomes his own screening time. That is why AI raises research output so much more than production output: in production, \Lan's capacity caps how many plans can be pursued; in research nothing does, until \Nap{} himself cannot keep up. The ceiling still exists, though, and it depends only on \Nap: AI alone makes him the bottleneck.
+\end{intuition}
+
+\subsection{RSI sustains research growth}
+
+\begin{proposition}[RSI sustains research growth]\label{prop:resgrowth}
+In research with Gaussian plans, $v(\xi)\sim N(m,\sigma^2)$, suppose AI raises capacity at rate $g_B$, $\mu_{B,t}=\mu_{B,0}e^{g_Bt}$, and does not raise $\kappa_B$; and vision speeds up screening at rate $g$, $\tau_{s,t}=\tau_{s,0}e^{-gt}$, without making signals noisier. Then
+\[
+g_{\Ycal}=\lim_{t\to\infty}\tfrac1t\ln\Ycal_t=\min\{g_B,\ g\}.
+\]
+\end{proposition}
+
+\begin{proof}
+Write $\bar R_t=n_A/\tau_{s,t}$ and $K_t=\mu_{B,t}$. In research $\bar U=v$, which is $\sigma$-sub-Gaussian around $m$.
+
+\emph{Upper bound.} There are two cases.
+\begin{itemize}
+  \item If $g\le g_B$: by Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R_t\,\E[v^+]$, which grows at rate $g=\min\{g_B,g\}$.
+  \item If $g_B<g$: the ratio $\bar R_t/K_t=(\bar R_0/K_0)e^{(g-g_B)t}$ tends to infinity, so eventually $\bar R_t\ge\sqrt e\,K_t$. Proposition~\ref{prop:judgment} applies to research with $\bar U=v$, and gives
+  \[
+  \Ycal_t\ \le\ K_t\Big(m^++\sigma\sqrt{2\ln(\bar R_t/K_t)}\Big)=K_t\,O(\sqrt t),
+  \]
+  which grows at rate $g_B=\min\{g_B,g\}$.
+\end{itemize}
+In both cases $\limsup_t\frac1t\ln\Ycal_t\le\min\{g_B,g\}$.
+
+\emph{Lower bound.} Consider the policy that takes one signal per plan and accepts if $\mu_1\ge\max\{c,z_t\}$, for a fixed $c>0$ and a capacity cutoff $z_t$ chosen so that the accepted flow does not exceed $K_t$.
+\begin{itemize}
+  \item \emph{Value of accepted plans.} Since $\E[U\mid s_1]=\mu_1$ and accepted plans have $\mu_1\ge c$, iterated expectations give $\E[U\mid\accept]\ge c$.
+  \item \emph{Acceptance probability.} Under Gaussian plans, $\mu_1\sim N(m_{U,t},\rho_{1,t}\sigma^2)$ with $m_{U,t}=m-\kappa_{B,t}$. If $c\le m_{U,t}$, then $P(\mu_1\ge c)\ge1/2$. Otherwise $P(\mu_1\ge c)=1-\Phi\big((c-m_{U,t})/(\sigma\sqrt{\rho_{1,t}})\big)$, which is increasing in $m_{U,t}$ and in $\rho_{1,t}$. Both weakly rise over time, since AI does not raise $\kappa_B$ and signals do not get noisier. So $P(\mu_1\ge c)\ge p\equiv\min\{p_0,1/2\}>0$ for all $t$, where $p_0$ is the value at $t=0$.
+  \item \emph{Flow.} The accepted flow is $\min\{\bar R_t\,P(\mu_1\ge c),\ K_t\}\ge\min\{\bar R_t\,p,\ K_t\}$.
+\end{itemize}
+So $\Ycal_t\ge c\,\min\{\bar R_0\,p\,e^{gt},\ K_0e^{g_Bt}\}$, and $\liminf_t\frac1t\ln\Ycal_t\ge\min\{g,g_B\}$. Combining the two bounds gives the result.
+\end{proof}
+
+\begin{intuition}
+Research output is the number of research projects completed times their average value. With RSI, both constraints on the number keep relaxing: vision lets \Nap{} screen more ideas, and AI lets \Ber{} solve more of them. So the number of completed projects grows exponentially, at the rate of whichever constraint relaxes more slowly, and that growth does not depend on finding ever-better ideas. This is why thin tails do not kill research growth, while they do kill production growth: in production, the number of projects is capped by \Lan, so growth would have to come from ever-better ideas, and with thin tails those run out. AI alone ($g=0$) or vision alone ($g_B=0$) still gives zero growth: one constraint stays fixed.
+\end{intuition}
+
+\subsection{Research versus production in the illustration}
+
+Take the parameters of Section~\ref{sec:illustration}, but drop \Lan: $\kappa_L=0$ and no execution capacity. Year-0 research output is $2.57$ (versus $1.57$ in production, the difference being the absence of the execution loss).
+
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}l r r r r@{}}
+\toprule
+& \multicolumn{2}{c}{Production} & \multicolumn{2}{c}{Research}\\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+& Year 60 & Growth & Year 60 & Growth\\
+\midrule
+\textcolor{ber}{AI} & 4.47 & 0\% & 14.27 & 0\%\\
+\textcolor{nap}{Vision} & 12.75 & 0.9\% & 13.75 & 0.8\%\\
+RSI & 27.12 & 0.9\% & 9{,}654 & 10.1\%\\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent{\small Growth is the average annual rate over years 50--60.}
+
+\paragraph{What changes.}
+\begin{itemize}
+  \item \textbf{AI}: research output rises $5.6$-fold (from $2.57$ to $14.27$), against $2.8$-fold in production. \Nap{} goes from accepting $1$ plan a year to $10$, from $3$ signals per plan to $1$, and his cutoff falls to zero: he pursues every plan he expects to be worth something. The ceiling of $14.27$ is set by his screening speed alone.
+  \item \textbf{Vision} alone behaves almost as in production: \Ber's capacity stays at one plan a year, so growth fades.
+  \item \textbf{RSI}: research output grows at about $10\%$ a year, the screening rate, because AI's capacity grows faster ($25\%$ a year). In production the same improvements give under $1\%$.
+\end{itemize}
+
+%=====================================================================
+\section{Discussion}
+%=====================================================================
+
+\subsection{What the model says}
+
+The three kinds of work have three kinds of ceiling. Solving has a ceiling at the plan's best feasible value. Judgment has a ceiling at perfect information. Screening more ideas has no hard ceiling, but with thin tails its returns are logarithmic. And all of them are bounded by what can physically be done. In production, the only form of progress that raises the long-run growth ceiling is progress that moves the physical frontier.
+
+Research is the exception. Without a physical stage, the binding constraints are cognitive, so AI relaxes \Nap's constraint and raises research output far more than production output, and RSI sustains research growth even with thin tails. A natural reading is that AI's largest effects should appear first in research, and reach production only to the extent that research moves the physical frontier.
+
+\subsection{What the model assumes, and how it could change}
+
+\begin{itemize}
+  \item \textbf{Ideas are free and the pool is fixed.} All of \Nap's time goes into evaluating ideas, none into producing them, and the pool $F$ never improves. If better ideas could be generated (if vision could shift $F$, not only improve signals), vision could sustain growth through a different channel.
+  \item \textbf{No recall, one idea at a time.} A rejected plan never returns. A more realistic strategist would hold many ideas at once, spend more signals on promising ones, and pick the best of the lot: a ranking-and-selection problem. The bounds in Section~\ref{sec:results} still apply, because Lemma~\ref{lem:selection} holds for any selection rule.
+  \item \textbf{The solver uses the best approximation in his sieve.} In practice he would fit $\hat W$ from finitely many evaluations of $W$, adding estimation error and tying his solving time $\tau_B$ to the number of evaluations.
+  \item \textbf{Losses do not depend on plan complexity.} If ambitious plans are harder to solve, a better solver makes high-value plans feasible and partly acts like vision.
+  \item \textbf{The physical frontier is exogenous.} If AI helps design better technologies, it moves $\bar r$ indirectly, and the conclusions change accordingly. Whether real progress in AI is mostly a better \Ber, a better \Nap, or a contributor to physical progress is the empirical question on which the growth conclusions turn.
+\end{itemize}
+
+\end{document}
