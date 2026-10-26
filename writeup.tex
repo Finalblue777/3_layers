@@ -1,11 +1,12 @@
 % From Ideas to Action: a detailed write-up of the model in ideas_to_action.pdf
+% !TEX program = xelatex
 % Compile with XeLaTeX:  latexmk -xelatex writeup.tex
 \documentclass[11pt]{article}
 
 \usepackage{amsmath,amsthm}
 \usepackage{fontspec}
 \usepackage{unicode-math}
-\setmainfont{STIX Two Text}[BoldFont={STIXGeneral-Bold},BoldItalicFont={STIXGeneral-BoldItalic}]
+\setmainfont{STIX Two Text}
 \setmathfont{STIX Two Math}
 \usepackage[margin=1.1in]{geometry}
 \usepackage{booktabs,xcolor,microtype}
@@ -53,7 +54,7 @@
 \maketitle
 
 \begin{abstract}
-Producing anything takes three kinds of work: deciding what to do, working out how to do it, and doing it. We model these as three agents, named after Napoleon, his chief of staff Berthier, and his marshal Lannes. \Nap{} screens an endless supply of ideas using noisy signals and must decide which few to pursue; \Ber{} turns a chosen plan into a detailed solution by approximating the true problem with a finite family of functions; \Lan{} carries the solution out, but only with the actions that are physically feasible. We define AI as an improvement to \Ber, \emph{vision} as an improvement to \Nap, RSI as both, and \emph{physical progress} as an improvement to \Lan. We prove four results. AI alone raises output to a fixed ceiling and then stops. Sharper judgment has a ceiling too. When the values of ideas have thin tails, neither AI, nor vision, nor both together can sustain growth; with heavy tails, faster screening can. Finally, once the physical frontier is taken into account, output is bounded whatever thinking does: lasting growth requires physical progress. Research is different. In a research sector, where \Ber's solution is itself the output and there is no \Lan, AI relaxes \Nap's capacity constraint without limit, raising research output much more than production output; and AI together with vision sustains growth even when ideas' values have thin tails.
+Producing anything takes three kinds of work: deciding what to do, working out how to do it, and doing it. We model these as three agents, named after Napoleon, his chief of staff Berthier, and his marshal Lannes. \Nap{} screens an endless supply of ideas using noisy signals and must decide which few to pursue; \Ber{} turns a chosen plan into a detailed solution by approximating the true problem with a finite family of functions; \Lan{} carries the solution out, but only with the actions that are physically feasible. We define one improvement for each agent (better ideation, better problem solving, and better physical execution) and study all seven combinations, among them AI (better problem solving), RSI (adding better ideation), and AI with robotics (adding better execution). One principle organizes the results: \emph{the agent left behind sets the limit}. Any single improvement raises output to a ceiling set by another agent. Any pair raises it further, to a ceiling set by the third; with thin-tailed idea values, no pair sustains growth. Improving all three sustains growth, at the pace of the slowest improvement. The physical frontier also interacts with ideas: payoff is supermodular in a plan's ambition and the frontier, so better execution raises the return to better ideas. In a research sector, where \Ber's solution is itself the output and there is no \Lan, RSI is already enough.
 \end{abstract}
 
 \tableofcontents
@@ -77,14 +78,17 @@ The names come from the Napoleonic army: Napoleon decided what each campaign sho
 The point of separating the three is that they fail in different ways. A strategist fails by pursuing the wrong idea. A solver fails by getting the details wrong for a good idea. An executor fails because the world does not allow exactly what the plan calls for. Improving one kind of work leaves the others' failures in place, and that is the source of every result below.
 \end{intuition}
 
-\paragraph{Results in brief.}
+\paragraph{Results in brief.} We study the seven combinations of improvements in three groups.
 \begin{enumerate}
-  \item \textbf{AI alone cannot sustain growth} (Proposition~\ref{prop:ai}). A better solver can at most remove its own errors and fill the downstream capacity. That raises output once, to a ceiling that depends only on the strategist and the executor.
-  \item \textbf{Sharper judgment has a ceiling} (Proposition~\ref{prop:judgment}). Better signals can at most give the strategist perfect information about the ideas he examines; with thin-tailed idea values, that is still a finite ceiling.
-  \item \textbf{With thin tails, nothing cognitive sustains growth} (Proposition~\ref{prop:thin}). If ideas' values are thin-tailed, even exponentially faster screening raises output only like $\sqrt t$.
-  \item \textbf{Heavy tails change this} (the heavy-tail proposition, Section~\ref{sec:heavy}), but \textbf{the physical frontier bounds output anyway} (Proposition~\ref{prop:frontier}). When better plans require actions further out, and only finitely many actions are feasible, output is bounded, whatever the strategist and the solver do. Long-run growth then requires moving the physical frontier.
-  \item \textbf{Research is different} (Propositions~\ref{prop:resceiling} and~\ref{prop:resgrowth}). In research there is no executor. AI then relaxes the strategist's capacity constraint without limit, so research output rises far more than production output, up to a ceiling set only by how fast the strategist can screen. With RSI, both constraints keep relaxing and research grows at the slower of the two rates, even with thin tails.
+  \item \textbf{One improvement has a ceiling} (Propositions~\ref{prop:ai}--\ref{prop:execution}). Better problem solving can at most remove its own errors and fill downstream capacity. Better ideation can at most sort plans perfectly. Better execution cannot plan faster. Each raises output once, to a ceiling set by another agent. Heavy-tailed idea values are the one way out, for faster screening (Section~\ref{sec:heavy}).
+  \item \textbf{Two improvements still have a ceiling, set by the agent left behind} (Propositions~\ref{prop:frontier}--\ref{prop:ideationrobotics}). For RSI it is \Lan: the physical frontier bounds output whatever thinking does, and with thin tails RSI grows at most like $\sqrt t$. For AI with robotics it is \Nap's screening speed. For ideation with robotics it is \Ber's solving speed.
+  \item \textbf{Ambition and the frontier are complements} (Lemma~\ref{lem:complements}). The gain from moving the physical frontier is largest for the most ambitious plans, and the best plans sit just beyond the frontier.
+  \item \textbf{All three improvements sustain growth} (Proposition~\ref{prop:allthree}), at the rate of the slowest improvement, even with thin tails.
+  \item \textbf{Research is different} (Propositions~\ref{prop:resceiling} and~\ref{prop:resgrowth}). With no executor, AI alone lifts research to \Nap's ceiling, and RSI sustains growth.
 \end{enumerate}
+Section~\ref{sec:experiment} describes a numerical experiment that runs all seven combinations from the same starting economy.
+
+\paragraph{Related literature.} The model builds on idea-based growth (Romer 1990; Jones 1995; Weitzman 1998) and on research as search over a distribution of ideas (Kortum 1997), where, as in our Propositions~\ref{prop:thin} and~\ref{prop:ideationrobotics}, sustained growth from search needs heavy-tailed ideas. On AI and growth, Aghion, Jones and Jones (2019) emphasize bottlenecks and Acemoglu and Restrepo (2018) tasks. Separating problem solving from production echoes knowledge hierarchies (Garicano 2000), and \Nap's screening problem is one of sequential information acquisition (Wald 1947). Our contribution is to separate judgment, problem solving, and physical execution, and to ask which combination of improvements sustains growth.
 
 %=====================================================================
 \section{The environment}
@@ -320,17 +324,28 @@ Let a process split into cycles $i=1,2,\dots$, where cycle $i$ lasts $T_i>0$ and
 \]
 \end{theorem*}
 
-\begin{proof}[Proof sketch]
-Let $M(t)$ be the number of cycles completed by time $t$, so that
-\[
-\sum_{i\le M(t)}T_i\ \le\ t\ <\ \sum_{i\le M(t)+1}T_i.
-\]
-Dividing by $M(t)$ and using the strong law of large numbers, $\frac1{M(t)}\sum_{i\le M(t)}T_i\to\E[T]$, so $M(t)/t\to1/\E[T]$. Again by the strong law,
-\[
-\frac1{M(t)}\sum_{i\le M(t)}R_i\ \to\ \E[R].
-\]
-Multiplying the two limits gives the result; the reward from the incomplete last cycle is negligible relative to $t$.
+\begin{proof}
+Write $S_n=\sum_{i\le n}T_i$ and let $M(t)=\max\{n\ge0:\ S_n\le t\}$ be the number of cycles completed by time $t$. Suppose first that each cycle's reward is credited when the cycle ends.
+\begin{enumerate}
+  \item \emph{Cycles keep finishing.} By the strong law of large numbers, $S_n/n\to\E[T]\in(0,\infty)$ almost surely. So $S_n\to\infty$, which gives $M(t)<\infty$ for every $t$, and $S_n<\infty$ for every $n$, which gives $M(t)\to\infty$ as $t\to\infty$.
+  \item \emph{The rate of completions.} By definition $S_{M(t)}\le t<S_{M(t)+1}$. Dividing by $M(t)$, which is positive for $t$ large,
+  \[
+  \frac{S_{M(t)}}{M(t)}\ \le\ \frac{t}{M(t)}\ <\ \frac{S_{M(t)+1}}{M(t)+1}\cdot\frac{M(t)+1}{M(t)}.
+  \]
+  Both outer terms tend to $\E[T]$ because $M(t)\to\infty$, so $M(t)/t\to1/\E[T]$.
+  \item \emph{The rate of reward.} The reward credited by time $t$ is $C(t)=\sum_{i\le M(t)}R_i$, and
+  \[
+  \frac{C(t)}{t}=\Big(\frac{1}{M(t)}\sum_{i\le M(t)}R_i\Big)\cdot\frac{M(t)}{t}\ \longrightarrow\ \E[R]\cdot\frac{1}{\E[T]},
+  \]
+  by the strong law applied to the $R_i$ (which needs $\E|R|<\infty$) and step 2.
+  \item \emph{Rewards earned during a cycle.} If reward accrues during a cycle, and the amount earned so far in cycle $i$ is at most $D_i$ in absolute value, with $(T_i,R_i,D_i)$ i.i.d.\ and $\E[D]<\infty$, then the reward earned by time $t$ differs from $C(t)$ by at most $D_{M(t)+1}$. The strong law gives $\frac1n\sum_{i\le n}D_i\to\E[D]$, hence $D_n/n\to0$, so
+  \[
+  \frac{D_{M(t)+1}}{t}=\frac{D_{M(t)+1}}{M(t)+1}\cdot\frac{M(t)+1}{t}\ \longrightarrow\ 0\cdot\frac{1}{\E[T]}=0. \qedhere
+  \]
+\end{enumerate}
 \end{proof}
+
+In our application every reward (a plan examined, a plan accepted, and the value of an accepted plan) is realized when the investigation ends, so step 4 is not needed.
 
 \begin{intuition}
 Over a long time $t$, about $t/\E[T]$ cycles fit, and each earns $\E[R]$ on average. Note that the rate is a ratio of averages, $\E[R]/\E[T]$, not an average of ratios. If half of all investigations take one signal and half take five, \Nap{} examines plans at rate $1/(3\tau_s)$, not at the average of $1/\tau_s$ and $1/(5\tau_s)$.
@@ -509,30 +524,82 @@ $n$ & $R_n$ & $q_n$ & $\sqrt{\rho_n}$ & $S(q_n)$ & $\Ycal(n)$\\
 With $n=3$, each plan takes $0.15$ years, so \Nap{} examines about $6.7$ plans a year and accepts the top $15\%$, with cutoff $z\approx-2.5+4(0.65)(1.04)\approx0.21$. That gives exactly one accepted plan a year, $Q=0.15/(3\times0.05)=1=K$, and output $1.57$.
 
 %=====================================================================
-\section{Technologies: AI, vision, RSI, and physical progress}
+\section{Improvements and scenarios}\label{sec:improvements}
 %=====================================================================
 
-Each kind of progress improves exactly one agent's technology.
+Each improvement relaxes exactly one agent's constraint. A \textbf{path} of an improvement is a sequence of technologies over time $t=0,1,2,\dots$, each at least as good as the last in the sense of the definition.
 
-\setcounter{definition}{3}\begin{definition}[AI]
-\textbf{AI} is an improvement to \Ber: it replaces $(\tau_B,k)$ with $(\tau_B',k')$ where $\tau_B'\le\tau_B$ or $k'\ge k$. \Nap{} and \Lan{} are unchanged.
+\setcounter{definition}{3}\begin{definition}[Better ideation]\label{def:ideation}
+\textbf{Better ideation} is an improvement to \Nap: it replaces $(\tau_s,\Scal)$ with $(\tau_s',\Scal')$ where $\tau_s'\le\tau_s$, or $\Scal'$ is Blackwell more informative than $\Scal$ (so $\Scal$ is a garbling of $\Scal'$).
 \end{definition}
 
-\begin{definition}[Vision]
-\textbf{Vision} is an improvement to \Nap: it replaces $(\tau_s,\Scal)$ with $(\tau_s',\Scal')$ where $\tau_s'\le\tau_s$, or $\Scal'$ is Blackwell more informative than $\Scal$ (so $\Scal$ is a garbling of $\Scal'$). \Ber{} and \Lan{} are unchanged.
+\begin{definition}[Better problem solving]\label{def:solving}
+\textbf{Better problem solving} is an improvement to \Ber: it replaces $(\tau_B,k)$ with $(\tau_B',k')$ where $\tau_B'\le\tau_B$ or $k'\ge k$.
 \end{definition}
 
-\begin{definition}[RSI]
-\textbf{RSI} is AI and vision together: a better \Ber{} and a better \Nap, with \Lan{} unchanged.
+\begin{definition}[Better physical execution]\label{def:execution}
+\textbf{Better physical execution} is an improvement to \Lan: it replaces $(\tau_L,\Rcal)$ with $(\tau_L',\Rcal')$ where $\tau_L'\le\tau_L$ or $\Rcal'\supseteq\Rcal$.
 \end{definition}
 
-\begin{definition}[Physical progress]
-\textbf{Physical progress} is an improvement to \Lan: $\Rcal'\supseteq\Rcal$ or $\tau_L'\le\tau_L$.
+\begin{definition}[Scenarios]\label{def:scenarios}
+A \textbf{scenario} is a non-empty set of improvements, applied together, with every other agent's technology held fixed. There are seven:
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+& \textcolor{nap}{Ideation} & \textcolor{ber}{Problem solving} & \textcolor{lan}{Execution}\\
+\midrule
+\multicolumn{4}{@{}l}{\textit{One improvement}}\\
+\quad Better ideation alone & $\checkmark$ & & \\
+\quad \textbf{AI} (better problem solving alone) & & $\checkmark$ & \\
+\quad Better execution alone & & & $\checkmark$\\
+\multicolumn{4}{@{}l}{\textit{Two improvements}}\\
+\quad \textbf{RSI} (recursive self-improvement) & $\checkmark$ & $\checkmark$ & \\
+\quad \textbf{AI with robotics} & & $\checkmark$ & $\checkmark$\\
+\quad Ideation with robotics & $\checkmark$ & & $\checkmark$\\
+\multicolumn{4}{@{}l}{\textit{All three}}\\
+\quad \textbf{RSI with robotics} & $\checkmark$ & $\checkmark$ & $\checkmark$\\
+\bottomrule
+\end{tabular}
+\end{center}
 \end{definition}
 
 \begin{intuition}
-AI solves faster ($\mu_B$ rises, which matters only while \Ber{} is the bottleneck) or with richer models ($\varepsilon_B$ falls, which tightens the bound on $\kappa_B$). Vision screens plans faster or judges them more sharply. Neither changes what can physically be done.
+Better problem solving means faster solving ($\mu_B$ rises, which matters only while \Ber{} is the bottleneck) or richer models ($\varepsilon_B$ falls, which tightens the bound on $\kappa_B$). Better ideation means screening plans faster or judging them more sharply. Better execution means more capacity to act, or a menu of feasible actions that reaches further. The seven scenarios differ in which agent, if any, is left behind, and that turns out to decide which ceiling applies.
 \end{intuition}
+
+%=====================================================================
+\section{The numerical experiment}\label{sec:experiment}
+%=====================================================================
+
+Each group of results below is followed by a numerical illustration. This section says exactly how it is computed.
+
+\paragraph{The economy at year 0.} Gaussian plans (Section~\ref{sec:gauss}) with $m=0$ and $\sigma=4$, and one strategist ($n_A=1$). By the Gaussian-plans lemma both losses are the same for every plan, so $U\sim N(m-\kappa_B-\kappa_L,\ \sigma^2)$. The other year-0 parameters, and how each improvement changes them, are:
+\begin{center}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{@{}l l l r r@{}}
+\toprule
+Improvement & Parameter & Meaning & Year 0 & Per year\\
+\midrule
+\textcolor{nap}{Ideation} (\Nap) & $\tau_s$ & years per signal & $0.05$ & $\div\,1.1$\\
+& $r$ & signal noise, $\sigma_\eta^2/\sigma^2$ & $4$ & $\div\,1.1$\\
+\textcolor{ber}{Problem solving} (\Ber) & $\mu_B$ & plans solved per year & $1$ & $\times\,1.25$\\
+& $\kappa_B$ & loss from solving, per plan & $1.5$ & $\div\,1.25$\\
+\textcolor{lan}{Execution} (\Lan) & $\mu_L$ & plans carried out per year & $2$ & $\times\,1.25$\\
+& $\kappa_L$ & loss from execution, per plan & $1$ & $\div\,1.25$\\
+\bottomrule
+\end{tabular}
+\end{center}
+The parameters $m$, $\sigma$, and $n_A$ never change. A falling $\kappa_B$ stands for a growing sieve (Lemma~\ref{lem:approx}); a falling $\kappa_L$ stands for a budget set that reaches closer to \Ber's solution.
+
+\paragraph{The procedure.}
+\begin{enumerate}
+  \item \emph{Same start.} Every scenario starts from the year-0 economy, where $K=\min\{1,2\}=1$, $m_U=-2.5$, \Nap{} takes $n=3$ signals, and output is $1.57$ a year (Section~\ref{sec:gauss}).
+  \item \emph{Improve only what the scenario names.} In year $t$ the improved agents' parameters equal their year-0 values times the yearly factor to the power $t$; all other parameters stay at year 0.
+  \item \emph{\Nap{} re-optimizes every year.} Given that year's $K_t=\min\{\mu_{B,t},\mu_{L,t}\}$, $m_{U,t}=m-\kappa_{B,t}-\kappa_{L,t}$, $r_t$, and $\tau_{s,t}$, he chooses the number of signals $n\in\{1,2,\dots\}$ and the cutoff~\eqref{eq:cutoff} to maximize output, using~\eqref{eq:tradeoff} or the formula below it when the cutoff is zero.
+  \item \emph{Record.} Output in years 0, 10, 20, and 60; the growth rate as the average annual rate over years 50--60, $(\Ycal_{60}/\Ycal_{50})^{1/10}-1$; and the bottleneck in year 60.
+\end{enumerate}
+The \textbf{bottleneck} is \Nap{} if he examines no more plans than capacity allows, $n_A/(n\tau_{s,t})\le K_t$, so that his screening limits the flow; otherwise it is whichever of \Ber{} and \Lan{} has the lower rate. All numbers are exact expected values: there is no simulation noise. The parameters are illustrative, not a forecast.
 
 %=====================================================================
 \section{Results}\label{sec:results}
@@ -542,22 +609,22 @@ AI solves faster ($\mu_B$ rises, which matters only while \Ber{} is the bottlene
 
 \begin{assumption}\label{ass:results}
 \begin{enumerate}
-  \item[(a)] \Lan{} is fixed: $\tau_L$ and $\Rcal$ do not change over time (except in Section~\ref{sec:physical}).
+  \item[(a)] Each result fixes the agents whose improvement it leaves out: their technologies do not change over time.
   \item[(b)] $\E|v(\xi)|<\infty$ under $F$, and output starts positive.
-  \item[(c)] For Propositions~\ref{prop:judgment}--\ref{prop:thin}: best feasible values have thin tails. That is, $\bar U(\xi)=\max_{r\in\Rcal}W(r;\xi)$ is $\sigma$-sub-Gaussian around its mean $\bar m=\E[\bar U]$:
+  \item[(c)] Where stated, plan values have thin tails: the variable named in the result, either the best feasible value $\bar U(\xi)=\max_{r\in\Rcal}W(r;\xi)$ or the ideal value $v(\xi)$, is $\sigma$-sub-Gaussian around its mean. For $\bar U$ with mean $\bar m=\E[\bar U]$, this means
   \[
   \E\Big[e^{\theta(\bar U-\bar m)}\Big]\le e^{\theta^2\sigma^2/2}\qquad\text{for all }\theta\in\mathbb{R}.
   \]
-  Moreover, screening outpaces capacity: $n_A/\tau_s\ge\sqrt e\,n_L/\tau_L$.
+  \item[(d)] Screening outpaces capacity: $n_A/\tau_s\ge\sqrt e\,\bar K$, where $\bar K$ is the capacity of the fixed downstream agent named in the result ($\mu_L$ in Propositions~\ref{prop:judgment} and~\ref{prop:thin}, $\mu_B$ in Propositions~\ref{prop:execution} and~\ref{prop:ideationrobotics}).
 \end{enumerate}
 The \textbf{output growth rate} is $g_{\Ycal}=\limsup_{t\to\infty}\frac1t\ln\Ycal_t$. Write $\bar R=n_A/\tau_s$ for the fastest possible rate of examining plans (every plan needs at least one signal).
 \end{assumption}
 
 \begin{intuition}
-A normal distribution with variance $\sigma^2$ is $\sigma$-sub-Gaussian; so is any bounded distribution. Sub-Gaussian means the chance of a very valuable plan falls off at least as fast as a normal tail: there are no rare, enormously valuable ideas. Note that the assumption is placed on $\bar U$, which depends only on the plans and the budget set, not on \Ber{} or \Nap. Whatever \Ber{} does, $U\le\bar U$, because the realized action always lies in $\Rcal$.
+A normal distribution with variance $\sigma^2$ is $\sigma$-sub-Gaussian; so is any bounded distribution. Sub-Gaussian means the chance of a very valuable plan falls off at least as fast as a normal tail: there are no rare, enormously valuable ideas. Whatever \Ber{} does, $U\le\bar U\le v$, because the realized action always lies in $\Rcal\subseteq\Acal(\xi)$.
 \end{intuition}
 
-\subsection{Two lemmas}
+\subsection{Three lemmas}
 
 \begin{lemma}[Selection bound]\label{lem:selection}
 Let $Z-\E[Z]$ be $\sigma$-sub-Gaussian, and let $A$ be any event with $P(A)=q\in(0,1]$. Then
@@ -575,11 +642,11 @@ where the last step uses $e^{\theta X}\ge0$. Taking logs and using the sub-Gauss
 \[
 \E[X\mid A]\ \le\ \frac{\theta\sigma^2}{2}+\frac{\ln(1/q)}{\theta}.
 \]
-The right side is minimized at $\theta=\sqrt{2\ln(1/q)}/\sigma$, where it equals $\sigma\sqrt{2\ln(1/q)}$. (If $q=1$ the bound is $0$, which is trivially true.)
+If $q<1$, the right side is minimized at $\theta=\sqrt{2\ln(1/q)}/\sigma$, where it equals $\sigma\sqrt{2\ln(1/q)}$. If $q=1$, then $\E[X\mid A]=\E[X]=0$.
 \end{proof}
 
 \begin{intuition}
-No matter how cleverly you select, and no matter what you know, the best a share $q$ of a thin-tailed population can average is about $\sigma\sqrt{2\ln(1/q)}$ above the mean. Becoming ten times more selective (dividing $q$ by ten) adds only a little to $\sqrt{\ln(1/q)}$. This is the mathematical core of every ceiling below: with thin tails, more selection has sharply diminishing returns.
+No matter how cleverly you select, and no matter what you know, the best a share $q$ of a thin-tailed population can average is about $\sigma\sqrt{2\ln(1/q)}$ above the mean. Becoming ten times more selective adds only a little to $\sqrt{\ln(1/q)}$. This is the mathematical core of every ceiling below: with thin tails, more selection has sharply diminishing returns.
 \end{intuition}
 
 \begin{lemma}[Screening bound]\label{lem:screening}
@@ -593,10 +660,50 @@ Each plan needs at least one signal, so $\E_\pi[N_\pi]\ge1$ and plans are examin
 \]
 \end{proof}
 
-\subsection{Result 1: AI alone cannot sustain growth}
+\begin{lemma}[Output bound under selection]\label{lem:output}
+Suppose $U\le Z$ for every plan, where $Z$ has mean $m_Z$ and $Z-m_Z$ is $\sigma$-sub-Gaussian, and suppose capacity satisfies $0<K\le\bar R/\sqrt e$. Then every policy with $Q(\pi)\le K$ has
+\[
+\Ycal\ \le\ B(K,\bar R)\equiv K\Big(m_Z^++\sigma\sqrt{2\ln(\bar R/K)}\Big).
+\]
+Moreover, $B$ is increasing in $\bar R$, and increasing in $K$ on $(0,\bar R/\sqrt e]$.
+\end{lemma}
+
+\begin{proof}
+If $Q=0$, then $\Ycal=0\le B$. Otherwise let $R\le\bar R$ be the examination rate and $q=P(\accept)=Q/R\in(0,1]$. Since $U\le Z$, Lemma~\ref{lem:selection} applied to $Z$ gives
+\[
+\Ycal=Q\,\E[U\mid A]\le Q\,\E[Z\mid A]\le Q\big(m_Z+\sigma\sqrt{2\ln(1/q)}\big)\le Q\,m_Z^++\sigma f(Q,R),
+\]
+where $f(Q,R)=Q\sqrt{2\ln(R/Q)}$. It remains to bound $f$.
+\begin{itemize}
+  \item $f$ is increasing in $R$: $\partial f/\partial R=Q/\big(R\sqrt{2\ln(R/Q)}\big)>0$ when $Q<R$.
+  \item Write $L=\ln(R/Q)$. Then $\partial f/\partial Q=\sqrt{2L}-1/\sqrt{2L}$, which is positive exactly when $L>1/2$, that is when $Q<R/\sqrt e$. So $f(\cdot,R)$ rises up to $Q=R/\sqrt e$, where it equals $R/\sqrt e$, and falls after.
+\end{itemize}
+Since $K\le\bar R/\sqrt e$, $f(\cdot,\bar R)$ is increasing on $(0,K]$. Two cases:
+\begin{itemize}
+  \item If $Q\le R/\sqrt e$: $f(Q,R)\le f(Q,\bar R)\le f(K,\bar R)$.
+  \item If $Q>R/\sqrt e$: $f(Q,R)\le R/\sqrt e<Q\le K\le K\sqrt{2\ln(\bar R/K)}=f(K,\bar R)$, using $\ln(\bar R/K)\ge1/2$.
+\end{itemize}
+In both cases $f(Q,R)\le f(K,\bar R)$, and $Q\,m_Z^+\le K\,m_Z^+$, which gives $\Ycal\le B(K,\bar R)$.
+
+For the monotonicity, $B$ is increasing in $\bar R$ by inspection. In $K$, with $L=\ln(\bar R/K)\ge1/2$,
+\[
+\frac{\partial B}{\partial K}=m_Z^++\sigma\Big(\sqrt{2L}-\frac{1}{\sqrt{2L}}\Big)\ \ge\ 0,
+\]
+because $\sqrt{2L}\ge1\ge1/\sqrt{2L}$.
+\end{proof}
+
+\begin{intuition}
+Output is the number of plans pursued times their average value. The number is capped by capacity, and the average value of the top share of a thin-tailed pool is capped by Lemma~\ref{lem:selection}. The bound grows with capacity and with the size of the pool screened, but only logarithmically with the pool. Every ceiling below is this bound with a particular $Z$ and a particular cap on $K$.
+\end{intuition}
+
+%---------------------------------------------------------------------
+\subsection{One improvement at a time}
+%---------------------------------------------------------------------
+
+\subsubsection*{Result 1: better problem solving alone has a ceiling}
 
 \begin{proposition}\label{prop:ai}
-Fix \Nap{} and \Lan. Along any path of AI, for all $t$,
+Fix \Nap{} and \Lan. Along any path of better problem solving, for all $t$,
 \[
 \Ycal_t\ \le\ \frac{n_A}{\tau_s}\;\E_{\xi\sim F}\Big[\max\Big\{0,\ \max_{r\in\Rcal}W(r;\xi)\Big\}\Big]\ <\ \infty,
 \]
@@ -613,65 +720,27 @@ so $g_{\Ycal}\le0$.
 \end{proof}
 
 \begin{intuition}
-AI can do two things: let more plans through, up to the executor's capacity, and make each plan's details better, up to its best feasible value. Both have a ceiling that AI cannot move: one set by \Lan's capacity, the other by what $\Rcal$ allows. So AI raises output once and then stops. The bound shown is loose (it ignores capacity), but any finite ceiling forces the growth rate to zero. In the illustration of Section~\ref{sec:illustration}, AI levels off at $4.47$.
+AI can do two things: let more plans through, up to the executor's capacity, and make each plan's details better, up to its best feasible value. Both have a ceiling that AI cannot move: one set by \Lan's capacity, the other by what $\Rcal$ allows. So AI raises output once and then stops.
 \end{intuition}
 
-\subsection{Result 2: sharper judgment has a ceiling}
+\subsubsection*{Result 2: better ideation alone has a ceiling}
 
 \begin{proposition}\label{prop:judgment}
-Fix the signal time $\tau_s$. For any \Ber{} and any signal technology, including perfect information,
+Fix the signal time $\tau_s$ and \Lan, let $\bar U$ be $\sigma$-sub-Gaussian with mean $\bar m$, and let $K\le\mu_L\le\bar R/\sqrt e$. For any \Ber{} and any signal technology, including perfect information,
 \[
 \Ycal\ \le\ K\bigg(\max\Big\{0,\ \E_{\xi\sim F}\Big[\max_{r\in\Rcal}W(r;\xi)\Big]\Big\}+\sigma\sqrt{2\ln\frac{n_A}{K\tau_s}}\bigg).
 \]
 \end{proposition}
 
 \begin{proof}
-Let $R$ be the examination rate and $q=P(\accept)$, so $Q=qR\le K$ and $R\le\bar R$. Since $U\le\bar U$, Lemma~\ref{lem:selection} applied to $Z=\bar U$ gives
-\[
-\Ycal=Q\,\E[U\mid A]\le Q\,\E[\bar U\mid A]\le Q\big(\bar m+\sigma\sqrt{2\ln(1/q)}\big)\le Q\,\bar m^++\sigma f(Q,R),
-\]
-where $f(Q,R)=Q\sqrt{2\ln(R/Q)}$ and we used $q=Q/R$. It remains to bound $f$.
-\begin{itemize}
-  \item $f$ is increasing in $R$: $\partial f/\partial R=Q/\big(R\sqrt{2\ln(R/Q)}\big)>0$.
-  \item Write $L=\ln(R/Q)$. Then $\partial f/\partial Q=\sqrt{2L}-1/\sqrt{2L}$, which is positive exactly when $L>1/2$, i.e.\ when $Q<R/\sqrt e$. So $f(\cdot,R)$ rises up to $Q=R/\sqrt e$, where it equals $R/\sqrt e$, and falls after.
-\end{itemize}
-By Assumption~\ref{ass:results}(c), $K\le\mu_L\le\bar R/\sqrt e$, so $f(\cdot,\bar R)$ is increasing on $[0,K]$. Two cases:
-\begin{itemize}
-  \item If $Q\le R/\sqrt e$: $f(Q,R)\le f(Q,\bar R)\le f(K,\bar R)$.
-  \item If $Q>R/\sqrt e$: $f(Q,R)\le R/\sqrt e<Q\le K\le K\sqrt{2\ln(\bar R/K)}=f(K,\bar R)$, using $\ln(\bar R/K)\ge1/2$.
-\end{itemize}
-In both cases $f(Q,R)\le K\sqrt{2\ln(\bar R/K)}$, and $Q\,\bar m^+\le K\,\bar m^+$. Substituting $\bar R=n_A/\tau_s$ gives the result.
+$U\le\bar U$ for every plan. Apply Lemma~\ref{lem:output} with $Z=\bar U$, $m_Z=\bar m=\E[\max_{r\in\Rcal}W(r;\xi)]$, and $\bar R=n_A/\tau_s$.
 \end{proof}
 
 \begin{intuition}
-Better judgment lets \Nap{} pick the truly best of the plans he examines, but it cannot make the plans he examines better. Even with perfect information, the best he can do is sort them perfectly, and Lemma~\ref{lem:selection} says that the top share of a thin-tailed pool is only so good. The ceiling depends on how many plans he can examine ($n_A/\tau_s$) and on how many he can pass on ($K$), and on nothing about his signals.
+Better judgment lets \Nap{} pick the truly best of the plans he examines, but it cannot make the plans he examines better. Even with perfect information, the best he can do is sort them perfectly, and the top share of a thin-tailed pool is only so good. The ceiling depends on how many plans he can examine and how many he can pass on, and on nothing about his signals. Faster screening is the other half of better ideation; Result~5 shows that with thin tails it raises output only like $\sqrt t$.
 \end{intuition}
 
-\subsection{Result 3: with thin tails, nothing cognitive sustains growth}
-
-\begin{proposition}\label{prop:thin}
-Suppose signals speed up at most exponentially, $\tau_{s,t}\ge\tau_{s,0}e^{-gt}$, and \Nap's technology only improves over time. Then for any paths of AI and vision,
-\[
-\Ycal_t\ \le\ \frac{n_L}{\tau_L}\bigg(\max\Big\{0,\ \E_{\xi\sim F}\Big[\max_{r\in\Rcal}W(r;\xi)\Big]\Big\}+\sigma\sqrt{2\ln\frac{n_A\tau_L}{n_L\tau_{s,0}}+2gt}\bigg).
-\]
-In particular output grows at most like $\sqrt t$, and $g_{\Ycal}\le0$.
-\end{proposition}
-
-\begin{proof}
-\begin{enumerate}
-  \item Proposition~\ref{prop:judgment} holds at each date $t$, for whatever \Ber{} and signal technology are in place, with $\bar R_t=n_A/\tau_{s,t}$.
-  \item The bound $B(K,\bar R)=K\big(\bar m^++\sigma\sqrt{2\ln(\bar R/K)}\big)$ is increasing in $K$ for $K\le\bar R/\sqrt e$, by the derivative computed above (the first term is increasing in $K$ as well). Since $K_t\le\mu_L$ and $\mu_L\le\bar R_0/\sqrt e\le\bar R_t/\sqrt e$, we may replace $K_t$ by $\mu_L$.
-  \item The quantity $\bar m=\E[\bar U]$ does not change over time, because $\bar U$ depends only on $F$ and $\Rcal$.
-  \item Substituting $\bar R_t\le\bar R_0e^{gt}$ gives $\ln(\bar R_t/\mu_L)\le\ln(\bar R_0/\mu_L)+gt$, which is the displayed bound.
-  \item A bound of order $\sqrt t$ satisfies $\frac1t\ln\Ycal_t\le\frac1t\ln(c_1+c_2\sqrt t)\to0$. \qedhere
-\end{enumerate}
-\end{proof}
-
-\begin{intuition}
-Exponentially faster screening means \Nap{} examines exponentially more plans, but with thin tails the best of $e^{gt}$ plans improves only like $\sqrt{2gt}$. Better solving cannot help, because it cannot lift plans above their best feasible value; better judgment cannot help, by Proposition~\ref{prop:judgment}. So AI, vision, and RSI all level off. Their levels differ, possibly by a lot, but their long-run growth rate is zero.
-\end{intuition}
-
-\subsection{Heavy tails change this}\label{sec:heavy}
+\subsubsection*{Heavy tails change this}\label{sec:heavy}
 
 \begin{proposition*}[Heavy tails]
 Suppose expected values have a Pareto tail, $P(U>x)=(x/x_m)^{-\alpha}$ for $x\ge x_m>0$, with $\alpha>1$, and capacity $K$ is fixed. If screening speeds up at rate $g$, $\bar R_t=\bar R_0e^{gt}$, then $g_{\Ycal}\le g/\alpha$, with equality under perfectly informative signals.
@@ -690,26 +759,79 @@ Suppose expected values have a Pareto tail, $P(U>x)=(x/x_m)^{-\alpha}$ for $x\ge
 \end{proof}
 
 \begin{intuition}
-With a heavy tail, there are always rare ideas that are vastly better than the rest, and the more ideas you look at, the better the best one you find, by a power of the pool size rather than a logarithm. So faster screening can sustain growth, at rate $g/\alpha$: the heavier the tail (smaller $\alpha$), the faster. Lasting growth from vision needs both faster screening \emph{and} rare, enormously valuable plans.
+With a heavy tail, there are always rare ideas that are vastly better than the rest, and the more ideas you look at, the better the best one you find, by a power of the pool size rather than a logarithm. So faster screening can sustain growth, at rate $g/\alpha$. Lasting growth from better ideation needs both faster screening \emph{and} rare, enormously valuable plans. Section~\ref{sec:physical} shows that the physical frontier closes this way out in production.
 \end{intuition}
 
-%=====================================================================
-\section{Physical constraints}\label{sec:physical}
-%=====================================================================
+\subsubsection*{Result 3: better execution alone has a ceiling}
 
-The heavy-tail proposition leaves a way out: heavy-tailed ideas. This section shows that once the physical frontier is taken into account, that way out is closed.
+\begin{proposition}\label{prop:execution}
+Fix \Nap{} and \Ber, let $v(\xi)$ be $\sigma$-sub-Gaussian with mean $m$, and let $\mu_B\le\bar R/\sqrt e$. Along any path of better execution, for all $t$,
+\[
+\Ycal_t\ \le\ \mu_B\bigg(\max\big\{0,\ m\big\}+\sigma\sqrt{2\ln\frac{n_A}{\mu_B\tau_s}}\bigg).
+\]
+\end{proposition}
 
-\subsection{A one-dimensional budget set}
+\begin{proof}
+\begin{enumerate}
+  \item Capacity is $K_t=\min\{\mu_B,\mu_{L,t}\}\le\mu_B\le\bar R/\sqrt e$, however fast \Lan{} becomes.
+  \item Whatever \Lan's budget set, the executed action lies in $\Acal(\xi)$, so $U_t\le v$.
+  \item Lemma~\ref{lem:output} with $Z=v$ gives $\Ycal_t\le B(K_t,\bar R)$, and $B$ is increasing in $K$ on $(0,\bar R/\sqrt e]$, so $\Ycal_t\le B(\mu_B,\bar R)$, which is the displayed bound. It does not depend on $t$. \qedhere
+\end{enumerate}
+\end{proof}
 
-Let actions be real numbers, $\Acal=[\underline a,\overline a]$. \Ber{} can propose any $\hat a\in\Acal$, but \Lan's budget set is finite:
+\begin{intuition}
+Better hands cannot plan faster. However quickly \Lan{} can act and however far his menu reaches, only $\mu_B$ plans a year are worked out, so plans queue at \Ber. The bound uses the ideal value $v$ rather than the best feasible value, because the budget set itself changes along the path.
+\end{intuition}
+
+\paragraph{In the illustration.} Following the procedure of Section~\ref{sec:experiment}:
+\begin{center}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{@{}l r r r r r l@{}}
+\toprule
+& Year 0 & 10 & 20 & 60 & Growth & Bottleneck\\
+\midrule
+No improvement & 1.57 & 1.57 & 1.57 & 1.57 & 0\% & \Ber\\
+Better ideation alone & 1.57 & 4.02 & 6.38 & 12.75 & 0.9\% & \Ber\\
+\textcolor{ber}{AI} & 1.57 & 4.14 & 4.43 & 4.47 & 0\% & \Lan\\
+Better execution alone & 1.57 & 2.46 & 2.56 & 2.57 & 0\% & \Ber\\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+  \item \textbf{AI} removes \Ber{} as the bottleneck (capacity rises from 1 to 2) and shrinks his losses towards zero. Output nearly triples, then stops at $4.47$, the output with $K=2$, $\kappa=1$, and year-0 screening: Result~1.
+  \item \textbf{Better ideation} grows fast at first, as sharper signals pay off, then slows to under $1\%$ a year: sharper signals hit the full-information ceiling (Result~2), and faster screening helps only like $\sqrt t$ (Result~5).
+  \item \textbf{Better execution} only removes the execution loss: \Ber{} was already the bottleneck, so capacity stays at one plan a year. Output stops at $2.57$: Result~3.
+\end{itemize}
+
+%---------------------------------------------------------------------
+\subsection{Two improvements, not three}
+%---------------------------------------------------------------------
+
+Each pair of improvements leaves one agent behind, and that agent sets the ceiling:
+\begin{center}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{@{}l l l l@{}}
+\toprule
+Pair & Left behind & What caps output & Results\\
+\midrule
+RSI & \Lan & the physical frontier and $\mu_L$ & 4--5\\
+AI with robotics & \Nap & the speed of screening, $n_A/\tau_s$ & 6\\
+Ideation with robotics & \Ber & the speed of solving, $\mu_B$ & 7\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{RSI: \texorpdfstring{\Lan}{Lannes} left behind}\label{sec:physical}
+
+Results 2 and 3 leave one way out for RSI: heavy-tailed ideas. This subsection shows that once the physical frontier is taken into account, that way out is closed.
+
+\paragraph{A one-dimensional budget set.} Let actions be real numbers, $\Acal=[\underline a,\overline a]$. \Ber{} can propose any $\hat a\in\Acal$, but \Lan's budget set is finite:
 \[
 \Rcal=\{r_1<r_2<\dots<r_J\},\qquad\tilde a=\arg\min_{r\in\Rcal}|r-\hat a|.
 \]
 $\Rcal$ is the set of physical technologies that exist. The \textbf{physical frontier} is $\bar r=\max\Rcal$: anything beyond it is carried out at $\bar r$.
 
-\subsection{Better plans sit further out}
-
-Let a plan's ideal action measure its \textbf{ambition}, and let value rise with ambition:
+\paragraph{Better plans sit further out.} Let a plan's ideal action measure its \textbf{ambition}, and let value rise with ambition:
 \begin{equation}\label{eq:ambition}
 v(\xi)=\beta\,a^*(\xi),\qquad W(a;\xi)=v(\xi)-\tfrac H2\big(a-a^*(\xi)\big)^2,\qquad\beta,H>0.
 \end{equation}
@@ -717,6 +839,8 @@ v(\xi)=\beta\,a^*(\xi),\qquad W(a;\xi)=v(\xi)-\tfrac H2\big(a-a^*(\xi)\big)^2,\q
 \begin{intuition}
 More valuable plans call for more extreme actions: a faster aircraft needs a stronger material, a bigger campaign needs more supply. Plotted against ambition $a^*$, potential value rises in a straight line. Realized value tracks it while a feasible technology is close by, dips between feasible points, peaks just beyond the frontier at $a^*=\bar r+\beta/H$, and then \emph{falls}: an idea that demands far more than any technology can deliver is worth less than a modest idea that can actually be done. Because \Nap's signals are about $U$, he learns about the realized curve, not the potential line, and does not chase plans beyond the frontier.
 \end{intuition}
+
+\paragraph{Result 4: the physical frontier bounds output.}
 
 \begin{proposition}[The physical frontier bounds output]\label{prop:frontier}
 Under~\eqref{eq:ambition}, for any \Nap, any \Ber, and any distribution of plans,
@@ -737,60 +861,203 @@ U,\ Y\ \le\ \beta\bar r+\frac{\beta^2}{2H}\qquad\text{and}\qquad\Ycal\ \le\ \mu_
 \end{enumerate}
 \end{proof}
 
-\begin{corollary}[Without physical progress, nothing grows]
-If $\bar r_t\le\bar r_0e^{g_Rt}$ and $\mu_{L,t}\le\mu_{L,0}e^{g_Lt}$ with $\bar r_0>0$, then for any paths of AI and vision,
+\paragraph{Ambition and the frontier are complements.} The frontier does more than cap output: it interacts with the plan.
+
+\begin{lemma}[Increasing differences]\label{lem:complements}
+Under~\eqref{eq:ambition}, consider a plan whose solution lies at or beyond the frontier, $\hat a\ge\bar r$ (for example, $a^*>\bar r$ and a perfect \Ber). Its realized value is
 \[
-\limsup_{t\to\infty}\tfrac1t\ln\Ycal_t\ \le\ g_R+g_L.
+Y(a^*,\bar r)=\beta a^*-\tfrac H2\,(a^*-\bar r)^2,
 \]
-Without physical progress ($g_R=g_L=0$), $g_{\Ycal}=0$ under AI, vision, or RSI.
-\end{corollary}
+which has increasing differences in ambition and the frontier, and is maximized over ambition just beyond the frontier:
+\[
+\frac{\partial^2Y}{\partial a^*\,\partial\bar r}=H>0,\qquad\arg\max_{a^*}Y=\bar r+\frac{\beta}{H}.
+\]
+\end{lemma}
 
 \begin{proof}
-By Proposition~\ref{prop:frontier}, $\Ycal_t\le\mu_{L,0}e^{g_Lt}\big(\beta\bar r_0e^{g_Rt}+\beta^2/(2H)\big)$. Taking logs, dividing by $t$, and letting $t\to\infty$ gives $g_L+g_R$.
+Since $\hat a\ge\bar r=\max\Rcal$, the point of $\Rcal$ nearest to $\hat a$ is $\bar r$, so $\tilde a=\bar r$ and $Y=W(\bar r;\xi)=\beta a^*-\frac H2(\bar r-a^*)^2$. Differentiating, $\partial Y/\partial\bar r=H(a^*-\bar r)$, so $\partial^2Y/\partial a^*\partial\bar r=H$. And $\partial Y/\partial a^*=\beta-H(a^*-\bar r)$, which is decreasing in $a^*$ and zero at $a^*=\bar r+\beta/H$.
 \end{proof}
 
 \begin{intuition}
-Heavy-tailed potential value does not help if the tail lies beyond what can be done. Whatever the strategist dreams up and however precisely the solver works it out, what reaches the world is capped by the best available technology. Long-run growth therefore requires moving the frontier: new materials, new machines, more capacity to act.
+Payoff is supermodular in the idea and the action that can be taken. The gain from moving the frontier out, $H(a^*-\bar r)$, is largest for the most ambitious plans, so better execution raises the return to better ideas; and the best plans to pursue sit a fixed distance $\beta/H$ beyond the frontier, so the frontier pulls ambition along with it. In the Gaussian example, where $W=v(\xi)+w(a)$, the cross-partial is zero: there better execution works only through $\kappa_L$ and capacity.
 \end{intuition}
 
-%=====================================================================
-\section{A numerical illustration}\label{sec:illustration}
-%=====================================================================
+\paragraph{Result 5: with thin tails, RSI levels off.}
 
-To see the results at work, take the Gaussian example of Section~\ref{sec:gauss} and let technology improve over 60 years.
+\begin{proposition}\label{prop:thin}
+Fix \Lan, let $\bar U$ be $\sigma$-sub-Gaussian with mean $\bar m$, and let $\mu_L\le\bar R_0/\sqrt e$. Suppose signals speed up at most exponentially, $\tau_{s,t}\ge\tau_{s,0}e^{-gt}$, and \Nap's technology only improves over time. Then for any paths of better problem solving and better ideation,
+\[
+\Ycal_t\ \le\ \frac{n_L}{\tau_L}\bigg(\max\Big\{0,\ \E_{\xi\sim F}\Big[\max_{r\in\Rcal}W(r;\xi)\Big]\Big\}+\sigma\sqrt{2\ln\frac{n_A\tau_L}{n_L\tau_{s,0}}+2gt}\bigg).
+\]
+In particular output grows at most like $\sqrt t$, and $g_{\Ycal}\le0$.
+\end{proposition}
 
-\paragraph{Parameters.} One strategist ($n_A=1$). Gaussian plans with $m=0$ and $\sigma=4$, so $U\sim N(-\kappa,4^2)$. At year 0: signal noise $r=4$ and signal time $\tau_s=0.05$; \Ber{} has $\mu_B=1$ and $\kappa_B=1.5$; \Lan{} has $\mu_L=2$ and $\kappa_L=1$, so $\kappa=2.5$ and $K=\min\{1,2\}=1$: \Ber{} is the bottleneck.
+\begin{proof}
+\begin{enumerate}
+  \item At each date $t$, $U_t\le\bar U$, and $\bar U$ does not change over time, because it depends only on $F$ and $\Rcal$.
+  \item Capacity is $K_t=\min\{\mu_{B,t},\mu_L\}\le\mu_L\le\bar R_0/\sqrt e\le\bar R_t/\sqrt e$, since $\tau_{s,t}\le\tau_{s,0}$.
+  \item Lemma~\ref{lem:output} with $Z=\bar U$ gives $\Ycal_t\le B(K_t,\bar R_t)\le B(\mu_L,\bar R_t)$, by monotonicity in $K$.
+  \item By monotonicity in $\bar R$ and $\bar R_t\le\bar R_0e^{gt}$, $\ln(\bar R_t/\mu_L)\le\ln(\bar R_0/\mu_L)+gt$, which gives the displayed bound.
+  \item A bound of order $\sqrt t$ satisfies $\frac1t\ln\Ycal_t\le\frac1t\ln(c_1+c_2\sqrt t)\to0$. \qedhere
+\end{enumerate}
+\end{proof}
 
-\paragraph{Improvements.} Each year:
-\begin{itemize}
-  \item \textbf{AI}: $\mu_B$ is multiplied by $1.25$ and $\kappa_B$ divided by $1.25$ (a richer sieve);
-  \item \textbf{vision}: $\tau_s$ and $r$ are divided by $1.1$ (faster and sharper signals);
-  \item \textbf{RSI}: both;
-  \item \Lan{} never changes.
-\end{itemize}
-Each year \Nap{} re-chooses the number of signals per plan to maximize output, using the cutoff~\eqref{eq:cutoff}.
+\begin{intuition}
+Exponentially faster screening means \Nap{} examines exponentially more plans, but with thin tails the best of $e^{gt}$ plans improves only like $\sqrt{2gt}$. Better solving cannot help, because it cannot lift plans above their best feasible value; better judgment cannot help, by Result~2. So AI, better ideation, and RSI all level off. Their levels differ, possibly by a lot, but their long-run growth rate is zero.
+\end{intuition}
 
+\begin{corollary}[Without better execution, nothing grows]\label{cor:frontier}
+Under~\eqref{eq:ambition}, if $\bar r_t\le\bar r_0e^{g_Rt}$ and $\mu_{L,t}\le\mu_{L,0}e^{g_Lt}$ with $\bar r_0>0$, then for any paths of better problem solving and better ideation,
+\[
+\limsup_{t\to\infty}\tfrac1t\ln\Ycal_t\ \le\ g_R+g_L.
+\]
+Without better execution ($g_R=g_L=0$), $g_{\Ycal}\le0$ under AI, better ideation, or RSI, even with heavy-tailed plans.
+\end{corollary}
+
+\begin{proof}
+By Proposition~\ref{prop:frontier}, $\Ycal_t\le\mu_{L,0}e^{g_Lt}\big(\beta\bar r_0e^{g_Rt}+\beta^2/(2H)\big)\le\mu_{L,0}\big(\beta\bar r_0+\beta^2/(2H)\big)e^{(g_L+g_R)t}$, using $g_R\ge0$ (if $g_R<0$ the bound $\mu_{L,0}e^{g_Lt}(\beta\bar r_0+\beta^2/(2H))$ applies instead). Taking logs, dividing by $t$, and letting $t\to\infty$ gives the result.
+\end{proof}
+
+\begin{intuition}
+Heavy-tailed potential value does not help if the tail lies beyond what can be done. Whatever the strategist dreams up and however precisely the solver works it out, what reaches the world is capped by the best available technology.
+\end{intuition}
+
+\subsubsection{AI with robotics: \texorpdfstring{\Nap}{Napoleon} left behind}
+
+\paragraph{Result 6: AI with robotics reaches \Nap's ceiling.}
+
+\begin{proposition}\label{prop:airobotics}
+Fix \Nap. Along any paths of better problem solving and better execution, for all $t$,
+\[
+\Ycal_t\ \le\ \frac{n_A}{\tau_s}\;\E_{\xi\sim F}\big[\max\{0,\ v(\xi)\}\big],
+\]
+and once $\min\{\mu_{B,t},\mu_{L,t}\}\ge n_A/\tau_s$, \Nap's capacity constraint is slack for every policy.
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item The executed action lies in $\Rcal\subseteq\Acal(\xi)$, so $U_t\le v$, whatever \Ber{} and \Lan{} do.
+  \item By Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R\,\E[U_t^+]\le\bar R\,\E[v^+]$, with $\bar R=n_A/\tau_s$ fixed. The bound is finite by Assumption~\ref{ass:results}(b).
+  \item Every policy has $Q(\pi)\le R(\pi)\le n_A/\tau_s$, since each plan needs at least one signal. If $K_t=\min\{\mu_{B,t},\mu_{L,t}\}\ge n_A/\tau_s$, then $Q(\pi)\le K_t$ for every policy, so the constraint in Problem N is slack. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+With both downstream stages improving, capacity eventually outruns \Nap's screening. He stops rationing and pursues every plan he expects to be worth something; his own screening time becomes the binding constraint. Output rises to a much higher level than under AI alone, but the ceiling depends only on \Nap.
+\end{intuition}
+
+\subsubsection{Ideation with robotics: \texorpdfstring{\Ber}{Berthier} left behind}
+
+\paragraph{Result 7: ideation with robotics is capped by \Ber.}
+
+\begin{proposition}\label{prop:ideationrobotics}
+Fix \Ber, let $v(\xi)$ be $\sigma$-sub-Gaussian with mean $m$, and let $\mu_B\le\bar R_0/\sqrt e$. Suppose signals speed up at most exponentially, $\tau_{s,t}\ge\tau_{s,0}e^{-gt}$, and \Nap's technology only improves over time. Then for any paths of better ideation and better execution,
+\[
+\Ycal_t\ \le\ \mu_B\bigg(\max\{0,\ m\}+\sigma\sqrt{2\ln\frac{n_A}{\mu_B\tau_{s,0}}+2gt}\bigg),
+\]
+so output grows at most like $\sqrt t$, and $g_{\Ycal}\le0$.
+\end{proposition}
+
+\begin{proof}
+\begin{enumerate}
+  \item Capacity is $K_t=\min\{\mu_B,\mu_{L,t}\}\le\mu_B\le\bar R_0/\sqrt e\le\bar R_t/\sqrt e$, since $\tau_{s,t}\le\tau_{s,0}$.
+  \item $U_t\le v$ at every date, whatever \Lan's budget set.
+  \item Lemma~\ref{lem:output} with $Z=v$ gives $\Ycal_t\le B(K_t,\bar R_t)\le B(\mu_B,\bar R_t)\le B(\mu_B,\bar R_0e^{gt})$, by monotonicity in $K$ and in $\bar R$. This is the displayed bound.
+  \item A bound of order $\sqrt t$ implies $g_{\Ycal}\le0$. \qedhere
+\end{enumerate}
+\end{proof}
+
+\begin{intuition}
+Without better problem solving, good plans pile up unsolved. Better ideation finds better plans and better execution can carry out whatever is solved, but only $\mu_B$ plans a year get worked out, so growth would have to come from ever-better ideas, and with thin tails those run out.
+\end{intuition}
+
+\paragraph{In the illustration.}
 \begin{center}
-\renewcommand{\arraystretch}{1.15}
-\begin{tabular}{@{}l r r r r r r@{}}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{@{}l r r r r r l@{}}
 \toprule
-& Year 0 & 10 & 20 & 40 & 60 & Growth, years 50--60\\
+& Year 0 & 10 & 20 & 60 & Growth & Bottleneck\\
 \midrule
-No progress & 1.57 & 1.57 & 1.57 & 1.57 & 1.57 & 0\%\\
-\textcolor{ber}{AI} & 1.57 & 4.14 & 4.43 & 4.47 & 4.47 & 0\%\\
-\textcolor{nap}{Vision} & 1.57 & 4.02 & 6.38 & 10.30 & 12.75 & 0.9\%\\
-RSI & 1.57 & 8.95 & 13.98 & 22.08 & 27.12 & 0.9\%\\
+\textcolor{nap}{RSI} & 1.57 & 8.95 & 13.98 & 27.12 & 0.9\% & \Lan\\
+\textcolor{lan}{AI with robotics} & 1.57 & 11.75 & 13.99 & 14.27 & 0\% & \Nap\\
+Ideation with robotics & 1.57 & 4.91 & 7.37 & 13.75 & 0.8\% & \Ber\\
 \bottomrule
 \end{tabular}
 \end{center}
-
-\paragraph{Reading the table.}
 \begin{itemize}
-  \item \textbf{AI} removes \Ber{} as the bottleneck (capacity rises from 1 to 2) and shrinks his losses towards zero. Output nearly triples, then stops at $4.47$: output with $K=2$, $\kappa=1$, and year-0 screening. That is Proposition~\ref{prop:ai} at work.
-  \item \textbf{Vision} grows fast at first, as sharper signals pay off, then slows to under $1\%$ a year: sharper signals hit the full-information ceiling (Proposition~\ref{prop:judgment}) and faster screening helps only like $\sqrt t$ (Proposition~\ref{prop:thin}).
-  \item \textbf{RSI} has a higher level than vision, because AI doubles the number of plans carried out and removes solution losses, but the same fading growth.
+  \item Each pair is capped by the agent it leaves behind: \Lan{} for RSI, \Nap{} for AI with robotics, \Ber{} for ideation with robotics.
+  \item Improvements are complements. AI alone adds $2.90$ to year-60 output and better execution alone adds $1.00$, but together they add $12.70$: each removes the other's bottleneck.
+  \item AI with robotics in production ends at exactly the level of AI in research ($14.27$, Section~\ref{sec:research}): once execution is no longer scarce, production behaves like research.
 \end{itemize}
-These parameters are illustrative, not a forecast.
+
+%---------------------------------------------------------------------
+\subsection{All three improvements}
+%---------------------------------------------------------------------
+
+\paragraph{Result 8: all three improvements sustain growth.}
+
+\begin{proposition}\label{prop:allthree}
+Take Gaussian plans, $v(\xi)\sim N(m,\sigma^2)$ with the sieve closed under adding constants, and Gaussian signals. Suppose better ideation speeds up screening at rate $g\ge0$, $\tau_{s,t}=\tau_{s,0}e^{-gt}$, without making signals noisier; better problem solving raises capacity at rate $g_B\ge0$, $\mu_{B,t}=\mu_{B,0}e^{g_Bt}$; and better execution raises capacity at rate $g_L\ge0$, $\mu_{L,t}=\mu_{L,0}e^{g_Lt}$; and neither loss rises over time. Then
+\[
+g_{\Ycal}=\lim_{t\to\infty}\tfrac1t\ln\Ycal_t=\min\{g,\ g_B,\ g_L\}.
+\]
+\end{proposition}
+
+\begin{proof}
+Write $\bar R_t=n_A/\tau_{s,t}=\bar R_0e^{gt}$ and $K_t=\min\{\mu_{B,t},\mu_{L,t}\}$, which grows at rate $g_K=\min\{g_B,g_L\}$ in the sense that $\frac1t\ln K_t\to g_K$. Whatever the budget set, $U_t\le v$, and $v$ is $\sigma$-sub-Gaussian around $m$.
+
+\emph{Upper bound.} There are two cases.
+\begin{itemize}
+  \item If $g\le g_K$: by Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R_t\,\E[U_t^+]\le\bar R_t\,\E[v^+]$, which grows at rate $g=\min\{g,g_K\}$.
+  \item If $g_K<g$: the ratio $\bar R_t/K_t$ tends to infinity, so eventually $K_t\le\bar R_t/\sqrt e$. Lemma~\ref{lem:output} with $Z=v$ gives
+  \[
+  \Ycal_t\ \le\ K_t\Big(m^++\sigma\sqrt{2\ln(\bar R_t/K_t)}\Big)=K_t\,O(\sqrt t),
+  \]
+  which grows at rate $g_K=\min\{g,g_K\}$.
+\end{itemize}
+In both cases $\limsup_t\frac1t\ln\Ycal_t\le\min\{g,g_K\}$.
+
+\emph{Lower bound.} Output is the maximum of Problem N, so it is at least the output of any feasible policy. Consider the policy that takes one signal per plan and accepts if $\mu_1\ge\max\{c,z_t\}$, for a fixed $c>0$ and a capacity cutoff $z_t$ chosen so that the accepted flow does not exceed $K_t$.
+\begin{itemize}
+  \item \emph{Value of accepted plans.} Since $\E[U\mid s_1]=\mu_1$ and accepted plans have $\mu_1\ge c$, iterated expectations give $\E[U\mid\accept]\ge c$.
+  \item \emph{Acceptance probability.} By the Gaussian-plans lemma, $\mu_1\sim N(m_{U,t},\rho_{1,t}\sigma^2)$ with $m_{U,t}=m-\kappa_{B,t}-\kappa_{L,t}$ and $\rho_{1,t}=1/(1+r_t)$. If $c\le m_{U,t}$, then $P(\mu_1\ge c)\ge1/2$. Otherwise
+  \[
+  P(\mu_1\ge c)=1-\Phi\Big(\frac{c-m_{U,t}}{\sigma\sqrt{\rho_{1,t}}}\Big),
+  \]
+  which is increasing in $m_{U,t}$ and in $\rho_{1,t}$. Both weakly rise over time, since neither loss rises and signals do not get noisier. So $P(\mu_1\ge c)\ge p\equiv\min\{p_0,1/2\}>0$ for all $t$, where $p_0$ is the value at $t=0$.
+  \item \emph{Flow.} One signal per plan means plans are examined at rate $\bar R_t$, so the accepted flow is
+  \[
+  \min\{\bar R_t\,P(\mu_1\ge c),\ K_t\}\ \ge\ \min\{\bar R_t\,p,\ K_t\}.
+  \]
+\end{itemize}
+So $\Ycal_t\ge c\,\min\{\bar R_0\,p\,e^{gt},\ K_t\}$, and $\liminf_t\frac1t\ln\Ycal_t\ge\min\{g,g_K\}$. Combining the two bounds, the limit exists and equals $\min\{g,g_B,g_L\}$.
+\end{proof}
+
+\begin{intuition}
+Output is the number of plans pursued times their average value. With all three improving, every constraint on the number keeps relaxing: \Nap{} screens more plans, \Ber{} solves more, and \Lan{} carries out more. The number of projects grows exponentially, at the pace of whichever improvement is slowest, and that growth does not depend on finding ever-better ideas, so it survives thin tails. It is a weakest link. Leave any improvement out and its rate is zero, so $g_{\Ycal}=0$: Results 1--7 again, in the Gaussian setting.
+\end{intuition}
+
+\paragraph{In the illustration: the full picture.}
+\begin{center}
+\renewcommand{\arraystretch}{1.12}
+\begin{tabular}{@{}l c c c r r l@{}}
+\toprule
+& \textcolor{nap}{Ide.} & \textcolor{ber}{Sol.} & \textcolor{lan}{Exe.} & Year 60 & Growth & Bottleneck\\
+\midrule
+No improvement & & & & 1.57 & 0\% & \Ber\\
+Better ideation alone & $\checkmark$ & & & 12.75 & 0.9\% & \Ber\\
+\textcolor{ber}{AI} & & $\checkmark$ & & 4.47 & 0\% & \Lan\\
+Better execution alone & & & $\checkmark$ & 2.57 & 0\% & \Ber\\
+\midrule
+\textcolor{nap}{RSI} & $\checkmark$ & $\checkmark$ & & 27.12 & 0.9\% & \Lan\\
+\textcolor{lan}{AI with robotics} & & $\checkmark$ & $\checkmark$ & 14.27 & 0\% & \Nap\\
+Ideation with robotics & $\checkmark$ & & $\checkmark$ & 13.75 & 0.8\% & \Ber\\
+\midrule
+\textbf{RSI with robotics} & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{9{,}654} & \textbf{10.1\%} & \Nap, improving\\
+\bottomrule
+\end{tabular}
+\end{center}
+With all three, output grows at about $10\%$ a year, the screening rate, which is the slowest of the three improvements ($1.1$ against $1.25$ for the other two), exactly as Result~8 predicts.
 
 %=====================================================================
 \section{A research sector}\label{sec:research}
@@ -804,11 +1071,7 @@ The research sector is the same model with no executor. Formally, take $\Rcal=\A
 \[
 Y=W(\hat a;\xi),\qquad U=v(\xi)-\kappa_B(\xi),\qquad \bar U(\xi)=v(\xi),\qquad K=\mu_B=\frac{n_B}{\tau_B}.
 \]
-The best feasible value is the ideal value itself, because nothing restricts which actions can be taken. Downstream capacity is \Ber's capacity alone.
-
-\begin{intuition}
-In production, three things limit output: how fast ideas are screened, how fast they are solved, and how fast they can be carried out. Research removes the third. The only constraints left are cognitive: \textcolor{nap}{screening} and \textcolor{ber}{solving}. That is exactly where AI and vision act, so research is where they should matter most.
-\end{intuition}
+The best feasible value is the ideal value itself, because nothing restricts which actions can be taken. Downstream capacity is \Ber's capacity alone, and better execution has nothing to act on.
 
 \subsection{AI relaxes Napoleon's constraint}
 
@@ -818,8 +1081,10 @@ Q(\pi)\ \le\ R(\pi)=\frac{n_A}{\tau_s\,\E_\pi[N_\pi]}\ \le\ \frac{n_A}{\tau_s},
 \]
 because each plan needs at least one signal. So once $\mu_B\ge n_A/\tau_s$, the capacity constraint can never bind.
 
-\begin{proposition}[AI lifts research to Napoleon's ceiling]\label{prop:resceiling}
-In research, fix \Nap. Along any path of AI, for all $t$,
+\paragraph{Result 9: AI lifts research to \Nap's ceiling.}
+
+\begin{proposition}\label{prop:resceiling}
+In research, fix \Nap. Along any path of better problem solving, for all $t$,
 \[
 \Ycal_t\ \le\ \frac{n_A}{\tau_s}\;\E_{\xi\sim F}\big[\max\{0,\ v(\xi)\}\big],
 \]
@@ -827,59 +1092,35 @@ and once $\mu_{B,t}\ge n_A/\tau_s$, \Nap's capacity constraint is slack for ever
 \end{proposition}
 
 \begin{proof}
-\begin{enumerate}
-  \item In research $U=v-\kappa_B\le v$, because $\kappa_B\ge0$ by~\eqref{eq:kappaB}.
-  \item By Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R\,\E[U_t^+]\le\bar R\,\E[v^+]$ with $\bar R=n_A/\tau_s$, whatever \Ber{} does. The bound is finite by Assumption~\ref{ass:results}(b).
-  \item For every policy, $Q(\pi)\le R(\pi)\le n_A/\tau_s$. If $\mu_{B,t}\ge n_A/\tau_s$, then $Q(\pi)\le K_t$ for every policy, so the constraint in Problem N is slack. \qedhere
-\end{enumerate}
+This is Proposition~\ref{prop:airobotics} with $\mu_{L,t}=\infty$: in research $U=v-\kappa_B\le v$ because $\kappa_B\ge0$ by~\eqref{eq:kappaB}; Lemma~\ref{lem:screening} gives the bound; and $K_t=\mu_{B,t}\ge n_A/\tau_s\ge Q(\pi)$ makes the constraint slack.
 \end{proof}
 
 \begin{intuition}
-When solving becomes cheap and fast, \Nap{} no longer has to ration. He stops being picky: he accepts every plan he expects to be worth something, and he spends fewer signals on each plan, because the point of investigating was to choose among plans competing for scarce slots. His binding constraint becomes his own screening time. That is why AI raises research output so much more than production output: in production, \Lan's capacity caps how many plans can be pursued; in research nothing does, until \Nap{} himself cannot keep up. The ceiling still exists, though, and it depends only on \Nap: AI alone makes him the bottleneck.
+When solving becomes cheap and fast, \Nap{} no longer has to ration. He stops being picky: he accepts every plan he expects to be worth something, and he spends fewer signals on each plan, because the point of investigating was to choose among plans competing for scarce slots. His binding constraint becomes his own screening time. In production, AI with robotics reaches the same ceiling; AI alone cannot, because \Lan's capacity binds first.
 \end{intuition}
 
-\subsection{RSI sustains research growth}
+\paragraph{Result 10: in research, RSI is enough.}
 
-\begin{proposition}[RSI sustains research growth]\label{prop:resgrowth}
-In research with Gaussian plans, $v(\xi)\sim N(m,\sigma^2)$, suppose AI raises capacity at rate $g_B$, $\mu_{B,t}=\mu_{B,0}e^{g_Bt}$, and does not raise $\kappa_B$; and vision speeds up screening at rate $g$, $\tau_{s,t}=\tau_{s,0}e^{-gt}$, without making signals noisier. Then
+\begin{proposition}\label{prop:resgrowth}
+In research with Gaussian plans, suppose better problem solving raises capacity at rate $g_B$, $\mu_{B,t}=\mu_{B,0}e^{g_Bt}$, and does not raise $\kappa_B$; and better ideation speeds up screening at rate $g$, $\tau_{s,t}=\tau_{s,0}e^{-gt}$, without making signals noisier. Then
 \[
 g_{\Ycal}=\lim_{t\to\infty}\tfrac1t\ln\Ycal_t=\min\{g_B,\ g\}.
 \]
 \end{proposition}
 
 \begin{proof}
-Write $\bar R_t=n_A/\tau_{s,t}$ and $K_t=\mu_{B,t}$. In research $\bar U=v$, which is $\sigma$-sub-Gaussian around $m$.
-
-\emph{Upper bound.} There are two cases.
-\begin{itemize}
-  \item If $g\le g_B$: by Lemma~\ref{lem:screening}, $\Ycal_t\le\bar R_t\,\E[v^+]$, which grows at rate $g=\min\{g_B,g\}$.
-  \item If $g_B<g$: the ratio $\bar R_t/K_t=(\bar R_0/K_0)e^{(g-g_B)t}$ tends to infinity, so eventually $\bar R_t\ge\sqrt e\,K_t$. Proposition~\ref{prop:judgment} applies to research with $\bar U=v$, and gives
-  \[
-  \Ycal_t\ \le\ K_t\Big(m^++\sigma\sqrt{2\ln(\bar R_t/K_t)}\Big)=K_t\,O(\sqrt t),
-  \]
-  which grows at rate $g_B=\min\{g_B,g\}$.
-\end{itemize}
-In both cases $\limsup_t\frac1t\ln\Ycal_t\le\min\{g_B,g\}$.
-
-\emph{Lower bound.} Consider the policy that takes one signal per plan and accepts if $\mu_1\ge\max\{c,z_t\}$, for a fixed $c>0$ and a capacity cutoff $z_t$ chosen so that the accepted flow does not exceed $K_t$.
-\begin{itemize}
-  \item \emph{Value of accepted plans.} Since $\E[U\mid s_1]=\mu_1$ and accepted plans have $\mu_1\ge c$, iterated expectations give $\E[U\mid\accept]\ge c$.
-  \item \emph{Acceptance probability.} Under Gaussian plans, $\mu_1\sim N(m_{U,t},\rho_{1,t}\sigma^2)$ with $m_{U,t}=m-\kappa_{B,t}$. If $c\le m_{U,t}$, then $P(\mu_1\ge c)\ge1/2$. Otherwise $P(\mu_1\ge c)=1-\Phi\big((c-m_{U,t})/(\sigma\sqrt{\rho_{1,t}})\big)$, which is increasing in $m_{U,t}$ and in $\rho_{1,t}$. Both weakly rise over time, since AI does not raise $\kappa_B$ and signals do not get noisier. So $P(\mu_1\ge c)\ge p\equiv\min\{p_0,1/2\}>0$ for all $t$, where $p_0$ is the value at $t=0$.
-  \item \emph{Flow.} The accepted flow is $\min\{\bar R_t\,P(\mu_1\ge c),\ K_t\}\ge\min\{\bar R_t\,p,\ K_t\}$.
-\end{itemize}
-So $\Ycal_t\ge c\,\min\{\bar R_0\,p\,e^{gt},\ K_0e^{g_Bt}\}$, and $\liminf_t\frac1t\ln\Ycal_t\ge\min\{g,g_B\}$. Combining the two bounds gives the result.
+Research is the case $\Rcal=\Acal(\xi)$, $\kappa_L=0$, and $\mu_L=\infty$, so $K_t=\mu_{B,t}$ and $m_{U,t}=m-\kappa_{B,t}$. The proof of Proposition~\ref{prop:allthree} applies word for word with $K_t=\mu_{B,t}$ and $g_K=g_B$: the upper bound uses only $U_t\le v$, Lemma~\ref{lem:screening}, and Lemma~\ref{lem:output}; the lower bound uses only that $m_{U,t}$ and $\rho_{1,t}$ do not fall. So $g_{\Ycal}=\min\{g,g_B\}$.
 \end{proof}
 
 \begin{intuition}
-Research output is the number of research projects completed times their average value. With RSI, both constraints on the number keep relaxing: vision lets \Nap{} screen more ideas, and AI lets \Ber{} solve more of them. So the number of completed projects grows exponentially, at the rate of whichever constraint relaxes more slowly, and that growth does not depend on finding ever-better ideas. This is why thin tails do not kill research growth, while they do kill production growth: in production, the number of projects is capped by \Lan, so growth would have to come from ever-better ideas, and with thin tails those run out. AI alone ($g=0$) or vision alone ($g_B=0$) still gives zero growth: one constraint stays fixed.
+With no \Lan{} to improve, RSI is already ``all three''. Research output is the number of projects completed times their average value; with RSI both constraints on the number keep relaxing, so research grows at the rate of the slower one, even with thin tails. In production the same improvements leave \Lan{} behind, so growth would have to come from ever-better ideas, and with thin tails those run out.
 \end{intuition}
 
 \subsection{Research versus production in the illustration}
 
-Take the parameters of Section~\ref{sec:illustration}, but drop \Lan: $\kappa_L=0$ and no execution capacity. Year-0 research output is $2.57$ (versus $1.57$ in production, the difference being the absence of the execution loss).
-
+Take the experiment of Section~\ref{sec:experiment}, but drop \Lan: $\kappa_L=0$ and no execution capacity. Year-0 research output is $2.57$ (versus $1.57$ in production, the difference being the absence of the execution loss).
 \begin{center}
-\renewcommand{\arraystretch}{1.15}
+\renewcommand{\arraystretch}{1.12}
 \begin{tabular}{@{}l r r r r@{}}
 \toprule
 & \multicolumn{2}{c}{Production} & \multicolumn{2}{c}{Research}\\
@@ -887,18 +1128,16 @@ Take the parameters of Section~\ref{sec:illustration}, but drop \Lan: $\kappa_L=
 & Year 60 & Growth & Year 60 & Growth\\
 \midrule
 \textcolor{ber}{AI} & 4.47 & 0\% & 14.27 & 0\%\\
-\textcolor{nap}{Vision} & 12.75 & 0.9\% & 13.75 & 0.8\%\\
-RSI & 27.12 & 0.9\% & 9{,}654 & 10.1\%\\
+\textcolor{lan}{AI with robotics} & 14.27 & 0\% & 14.27 & 0\%\\
+Better ideation alone & 12.75 & 0.9\% & 13.75 & 0.8\%\\
+\textcolor{nap}{RSI} & 27.12 & 0.9\% & 9{,}654 & 10.1\%\\
 \bottomrule
 \end{tabular}
 \end{center}
-\noindent{\small Growth is the average annual rate over years 50--60.}
-
-\paragraph{What changes.}
 \begin{itemize}
-  \item \textbf{AI}: research output rises $5.6$-fold (from $2.57$ to $14.27$), against $2.8$-fold in production. \Nap{} goes from accepting $1$ plan a year to $10$, from $3$ signals per plan to $1$, and his cutoff falls to zero: he pursues every plan he expects to be worth something. The ceiling of $14.27$ is set by his screening speed alone.
-  \item \textbf{Vision} alone behaves almost as in production: \Ber's capacity stays at one plan a year, so growth fades.
-  \item \textbf{RSI}: research output grows at about $10\%$ a year, the screening rate, because AI's capacity grows faster ($25\%$ a year). In production the same improvements give under $1\%$.
+  \item \textbf{AI}: research output rises $5.6$-fold (from $2.57$ to $14.27$), against $2.8$-fold in production. \Nap{} goes from accepting $1$ plan a year to $10$, from $3$ signals per plan to $1$, and his cutoff falls to zero. The ceiling of $14.27$ is set by his screening speed alone.
+  \item \textbf{Robotics} has nothing to do in research, so AI with robotics in research is just AI; in production it ends at the same $14.27$.
+  \item \textbf{RSI}: research output grows at about $10\%$ a year, the screening rate. In production the same improvements give under $1\%$; adding better execution (RSI with robotics) restores the $10\%$.
 \end{itemize}
 
 %=====================================================================
@@ -907,18 +1146,27 @@ RSI & 27.12 & 0.9\% & 9{,}654 & 10.1\%\\
 
 \subsection{What the model says}
 
-The three kinds of work have three kinds of ceiling. Solving has a ceiling at the plan's best feasible value. Judgment has a ceiling at perfect information. Screening more ideas has no hard ceiling, but with thin tails its returns are logarithmic. And all of them are bounded by what can physically be done. In production, the only form of progress that raises the long-run growth ceiling is progress that moves the physical frontier.
+The three kinds of work have three kinds of ceiling. Solving has a ceiling at the plan's best feasible value. Judgment has a ceiling at perfect information. Screening more ideas has no hard ceiling, but with thin tails its returns are logarithmic. And all of them are bounded by what can physically be done.
 
-Research is the exception. Without a physical stage, the binding constraints are cognitive, so AI relaxes \Nap's constraint and raises research output far more than production output, and RSI sustains research growth even with thin tails. A natural reading is that AI's largest effects should appear first in research, and reach production only to the extent that research moves the physical frontier.
+Organized by how many agents improve, the results say one thing: \emph{the agent left behind sets the limit}. One improvement raises output to a ceiling set by another agent. Two improvements raise it further, to a ceiling set by the third. Only improving all three sustains growth, at the pace of the slowest improvement. Research is the exception that proves the rule: with no physical stage there are only two agents, so RSI is enough. A natural reading is that AI's largest effects should appear first in research, and reach production only to the extent that execution improves too.
 
 \subsection{What the model assumes, and how it could change}
 
 \begin{itemize}
-  \item \textbf{Ideas are free and the pool is fixed.} All of \Nap's time goes into evaluating ideas, none into producing them, and the pool $F$ never improves. If better ideas could be generated (if vision could shift $F$, not only improve signals), vision could sustain growth through a different channel.
+  \item \textbf{Ideas are free and the pool is fixed.} All of \Nap's time goes into evaluating ideas, none into producing them, and the pool $F$ never improves. If better ideation could shift $F$, not only improve signals, it could sustain growth through a different channel.
   \item \textbf{No recall, one idea at a time.} A rejected plan never returns. A more realistic strategist would hold many ideas at once, spend more signals on promising ones, and pick the best of the lot: a ranking-and-selection problem. The bounds in Section~\ref{sec:results} still apply, because Lemma~\ref{lem:selection} holds for any selection rule.
   \item \textbf{The solver uses the best approximation in his sieve.} In practice he would fit $\hat W$ from finitely many evaluations of $W$, adding estimation error and tying his solving time $\tau_B$ to the number of evaluations.
-  \item \textbf{Losses do not depend on plan complexity.} If ambitious plans are harder to solve, a better solver makes high-value plans feasible and partly acts like vision.
-  \item \textbf{The physical frontier is exogenous.} If AI helps design better technologies, it moves $\bar r$ indirectly, and the conclusions change accordingly. Whether real progress in AI is mostly a better \Ber, a better \Nap, or a contributor to physical progress is the empirical question on which the growth conclusions turn.
+  \item \textbf{Losses do not depend on plan complexity.} If ambitious plans are harder to solve, a better solver makes high-value plans feasible and partly acts like better ideation.
+  \item \textbf{The physical frontier is exogenous.} If AI helps design better technologies, it moves $\bar r$ indirectly. Whether real progress in AI is mostly better problem solving, better ideation, or a contributor to better execution is the empirical question on which the growth conclusions turn.
 \end{itemize}
+
+\subsection{Next steps}
+
+\begin{enumerate}
+  \item \textbf{Endogenous complexity.} Do ambitious plans also need more \Lan{} time, $\tau_L(\xi)$, or more \Ber{} time, $\tau_B(\xi)$? Lemma~\ref{lem:complements} is a first step: it makes the value of execution depend on the plan.
+  \item \textbf{Measurement.} Estimate the tail of plan values and the pace of physical progress, and separate failures of judgment, solving, and execution in data.
+  \item \textbf{Occupational choice and wages.} How does cheaper \Ber{} labour change demand for \Nap- and \Lan-like workers?
+  \item \textbf{General equilibrium.} Let the numbers of each agent, $n_A$, $n_B$, $n_L$, respond to prices.
+\end{enumerate}
 
 \end{document}
